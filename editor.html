@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>足迹数据构建器 - XiaoTen FootprintMap</title>
   <link rel="stylesheet" href="static/css/footprintmap.css" />
+  <link rel="icon" href="data:;base64,=">
   <style>
     body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; background:#f5f7fa; margin:0; padding:0; }
     header { padding:20px 24px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; }
@@ -200,7 +201,18 @@
   </header>
   <main>
     <section class="panel" style="flex:1 1 480px;">
-      <h2>📝 地点录入</h2>
+      <h2>🗺️ 坐标拾取</h2>
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <input type="text" id="placeSearchInput" placeholder="搜索地点以定位拾取，如：杭州西湖" style="flex:1;" />
+        <button type="button" class="secondary" id="placeSearchBtn">搜索</button>
+      </div>
+      <div id="map"></div>
+      <div style="margin-top:8px; margin-bottom:12px;">
+        <label style="display:block; font-weight:600; margin-bottom:6px;">坐标 *（经度,纬度；可点击地图拾取）</label>
+        <input type="text" id="coordinates" required placeholder="116.4074,39.9042" aria-required="true" />
+      </div>
+
+      <h2 style="margin-top:6px;">📝 地点录入</h2>
       <form id="locationForm" autocomplete="off">
         <div id="formErrors" style="display:none; margin-bottom:12px; padding:8px 10px; border:1px solid #dc2626; background:#fef2f2; color:#b91c1c; border-radius:6px; font-size:12px;"></div>
         <div class="group">
@@ -212,13 +224,14 @@
           <textarea id="description" placeholder="简要描述该地点"></textarea>
         </div>
         <div class="inline">
-          <div class="group">
-            <label>日期（可选，YYYY-MM-DD）</label>
-            <input type="date" id="date" />
-          </div>
-          <div class="group">
-            <label>坐标 *（经度,纬度；可点击地图拾取）</label>
-            <input type="text" id="coordinates" required placeholder="116.4074,39.9042" aria-required="true" />
+          <div class="group" style="display:flex; gap:8px; align-items:center;">
+            <div style="flex:1; min-width:0;">
+              <label>日期（可选，YYYY-MM-DD）</label>
+              <input type="date" id="date" />
+            </div>
+            <div style="width:86px;">
+              <button type="button" class="secondary" id="clearDateBtn" style="width:100%;">清空日期</button>
+            </div>
           </div>
         </div>
         <div class="group">
@@ -260,13 +273,7 @@
         </div>
         <p class="small">必填项：名称、坐标。其他字段可选但推荐填写描述/日期以丰富信息。</p>
       </form>
-      <h2 style="margin-top:26px;">🗺️ 坐标拾取</h2>
-      <div style="display:flex; gap:8px; margin-bottom:8px;">
-        <input type="text" id="placeSearchInput" placeholder="搜索地点以定位拾取，如：杭州西湖" style="flex:1;" />
-        <button type="button" class="secondary" id="placeSearchBtn">搜索</button>
-      </div>
-      <div id="map"></div>
-      <p class="small">直接点击地图任意位置即可拾取坐标（支持全球）。搜索功能仅支持中国境内地点，国外地点请通过地图缩放平移后点击获取。</p>
+      
     </section>
 
     <section class="panel" style="flex:1 1 420px;">
@@ -362,9 +369,32 @@
       citrus: 'linear-gradient(135deg, #fdfb8f, #a1ffce)'
     };
 
+    // 日期格式化工具：统一为 YYYY-MM-DD（若无法解析则返回空字符串）
+    function formatDateISO(s){
+      if(!s) return '';
+      if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      // 尝试 Date.parse 解析常见格式
+      const ts = Date.parse(s);
+      if(!isNaN(ts)){
+        const d = new Date(ts);
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,'0');
+        const dd = String(d.getDate()).padStart(2,'0');
+        return `${y}-${m}-${dd}`;
+      }
+      // 解析中文格式如 2025年11月19日 或 2025年11月
+      const m = /^(\d{4})年(\d{1,2})月(?:([0-9]{1,2})日)?/.exec(s);
+      if(m){
+        const y = m[1]; const mm = String(m[2]).padStart(2,'0'); const dd = m[3] ? String(m[3]).padStart(2,'0') : '01';
+        return `${y}-${mm}-${dd}`;
+      }
+      return '';
+    }
+    function formatDateDisplay(s){ const iso = formatDateISO(s); return iso || ''; }
+
     // 恢复草稿
     const draft = lsGet('footprintmap_builder_locations', null);
-    if(draft){ try{ locations = JSON.parse(draft); }catch(e){} }
+    if(draft){ try{ locations = JSON.parse(draft); locations = locations.map(l=> ({ ...l, date: formatDateISO(l.date) || l.date })); }catch(e){} }
 
     function persistDraft(){ lsSet('footprintmap_builder_locations', JSON.stringify(locations)); }
 
@@ -492,12 +522,13 @@
       const name = document.getElementById('name').value.trim();
       const description = document.getElementById('description').value.trim();
       const date = document.getElementById('date').value.trim();
+      const dateNorm = formatDateISO(date);
       const coordinates = document.getElementById('coordinates').value.trim();
       const markerColor = document.getElementById('markerColor').value.trim();
       const categories = getSelectedCategories();
       const url = document.getElementById('url').value.trim();
       const urlLabel = document.getElementById('urlLabel').value.trim();
-      const draftObj = { name, coordinates, description, date, url, urlLabel, photos:[...photosTemp], categories, markerColor };
+      const draftObj = { name, coordinates, description, date: dateNorm || undefined, url, urlLabel, photos:[...photosTemp], categories, markerColor };
       const errs = collectErrors(draftObj);
       showErrors(errs);
       clearInvalidHighlights(); applyInvalidHighlights(draftObj);
@@ -554,6 +585,12 @@
       }, 80);
     };
 
+    // 清空日期按钮
+    const clearDateBtn = document.getElementById('clearDateBtn');
+    if(clearDateBtn){
+      clearDateBtn.addEventListener('click', ()=>{ document.getElementById('date').value = ''; });
+    }
+
     function renderLocations(){
       locationListEl.innerHTML='';
       locations.forEach((loc,idx)=>{
@@ -575,7 +612,7 @@
         // 元信息
         const meta = document.createElement('div'); 
         meta.className='item-meta';
-        meta.textContent = `${loc.date || '未指定日期'} · ${loc.coordinates}`; 
+        meta.textContent = `${formatDateDisplay(loc.date) || '未指定日期'} · ${loc.coordinates}`; 
         item.appendChild(meta);
         
         // 描述
@@ -602,7 +639,7 @@
         // 图片和链接
         const extraInfo = document.createElement('div');
         extraInfo.style.marginTop='6px';
-        extraInfo.style.fontSize='11px';
+          extraInfo.style.fontSize='12px';
         extraInfo.style.color='#64748b';
         if(loc.photos && loc.photos.length){ 
           const photoSpan = document.createElement('span');
@@ -635,7 +672,7 @@
           editingIndex = idx;
           document.getElementById('name').value = loc.name;
           document.getElementById('description').value = loc.description || '';
-          document.getElementById('date').value = loc.date && /\d{4}-\d{2}-\d{2}/.test(loc.date) ? loc.date : '';
+          document.getElementById('date').value = formatDateISO(loc.date) || '';
           document.getElementById('coordinates').value = loc.coordinates;
           selectedCategories = new Set(loc.categories||[]); renderCategoryOptions();
           selectedMarkerColor = loc.markerColor || ''; 
@@ -778,7 +815,7 @@
         try { 
           const data = JSON.parse(reader.result); 
           if(Array.isArray(data.locations)){ 
-            data.locations.forEach(l=>{ if(l.name && l.coordinates){ locations.push(l); } }); 
+            data.locations.forEach(l=>{ if(l.name && l.coordinates){ locations.push({ ...l, date: formatDateISO(l.date) || l.date }); } }); 
             // 如果启用导入自动排序
             if(importAutoSort){
               locations.sort((a,b)=>{
@@ -812,7 +849,7 @@
       try{
         fetch('./static/data/footprints.example.json').then(res=>{ if(!res.ok) throw new Error('no sample'); return res.json(); }).then(data=>{
           if(data && Array.isArray(data.locations) && data.locations.length){
-            locations = data.locations.filter(l=> l && l.name && l.coordinates);
+            locations = data.locations.filter(l=> l && l.name && l.coordinates).map(l=> ({ ...l, date: formatDateISO(l.date) || l.date }));
             renderLocations(); renderPhotosTemp(); persistDraft();
             // 生成 JSON 和尝试渲染预览（若位置存在）
             generateJson(); renderPreviewMap();
