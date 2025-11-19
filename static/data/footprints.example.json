@@ -274,5 +274,20 @@
       "categories": ["2024", "海滨", "旅行"],
       "markerColor": "ocean"
     }
+    ,
+    {
+      "name": "合肥",
+      "coordinates": "117.2272,31.8206",
+      "description": "安徽省会，近年来科技与教育发展迅速。",
+      "date": "2024-11-15",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg"
+      ],
+      "categories": ["2024", "城市", "旅行"],
+      "markerColor": "sunset"
+    }
   ]
 }
