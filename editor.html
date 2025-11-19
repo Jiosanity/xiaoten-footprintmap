@@ -431,7 +431,36 @@
       if(e.key==='Enter'){ e.preventDefault(); addPhotoUrl(); }
     });
     function addPhotoUrl(){
-      const v = photoInput.value.trim(); if(!v) return; photosTemp.push(v); photoInput.value=''; renderPhotosTemp();
+      const v = photoInput.value.trim();
+      if(!v) return;
+      // 校验 URL 格式
+      if(!isValidUrl(v)){
+        // 临时显示错误信息
+        flashFormError('图片 URL 非法');
+        return;
+      }
+      // 防止重复添加相同图片链接
+      if(photosTemp.includes(v)){
+        flashFormError('该图片链接已添加，不能重复添加');
+        photoInput.value = '';
+        return;
+      }
+      photosTemp.push(v);
+      photoInput.value = '';
+      renderPhotosTemp();
+    }
+
+    // 在表单顶部短时闪现错误信息（不影响其它校验）
+    function flashFormError(msg, duration = 2000){
+      if(!formErrorsEl) return alert(msg);
+      const prev = formErrorsEl.innerHTML;
+      const wasVisible = formErrorsEl.style.display !== 'none' && formErrorsEl.style.display !== '';
+      formErrorsEl.style.display = 'block';
+      formErrorsEl.innerHTML = `<div>• ${msg}</div>`;
+      setTimeout(()=>{
+        if(wasVisible){ formErrorsEl.innerHTML = prev; }
+        else { formErrorsEl.style.display = 'none'; formErrorsEl.textContent = ''; }
+      }, duration);
     }
 
     // 校验函数
