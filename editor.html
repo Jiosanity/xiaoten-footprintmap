@@ -454,8 +454,6 @@
       if(fields.coordinates && !validateCoordinates(fields.coordinates)) errs.push('坐标格式错误或范围非法 (lng,lat)');
       if(fields.url && !isValidUrl(fields.url)) errs.push('关联链接 URL 非法');
       for(const p of fields.photos){ if(!isValidUrl(p)) { errs.push('图片 URL 非法: '+p); break; } }
-      const duplicateIndex = locations.findIndex((l,i)=> l.name === fields.name && i!==editingIndex);
-      if(duplicateIndex !== -1) errs.push('名称已存在："'+fields.name+'"');
       return errs;
     }
     function showErrors(errs){
