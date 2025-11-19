@@ -3,11 +3,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![AMap](https://img.shields.io/badge/AMap-2.0-06beb6)](https://lbs.amap.com/)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fjiosanity.github.io%2FXiaoTen-FootprintMap%2F)](https://jiosanity.github.io/XiaoTen-FootprintMap/)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Ffootprintmap.xiaoten.com%2F)](https://footprintmap.xiaoten.com/)
 
 一个基于高德地图的纯前端足迹地图组件，支持标记集群、分类筛选、照片轮播等功能。
 
-简体中文 | [在线演示](https://Jiosanity.github.io/XiaoTen-FootprintMap/)
+简体中文 | [在线演示](https://footprintmap.xiaoten.com/)
 
 ## ✨ 特性
 
@@ -25,7 +25,7 @@
 
 在线演示：
 
-[https://Jiosanity.github.io/XiaoTen-FootprintMap/](https://Jiosanity.github.io/XiaoTen-FootprintMap/)
+[https://footprintmap.xiaoten.com/](https://footprintmap.xiaoten.com/)
 
 [关于-小十的个人博客](https://www.xiaoten.com/pages/about/)
 
