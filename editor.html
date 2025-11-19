@@ -732,12 +732,18 @@
             // 强制滚动并聚焦到坐标输入，确保用户能直接编辑坐标
             const coordsEl = document.getElementById('coordinates');
             if(coordsEl && typeof coordsEl.scrollIntoView === 'function'){
-              // 先滚动到可见位置
-              coordsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // 计算目标位置并精确滚动到坐标输入，避免被地图或其他 DOM 重排影响
+              try{
+                const headerEl = document.querySelector('header');
+                const headerHeight = headerEl ? headerEl.offsetHeight + 12 : 80;
+                const rect = coordsEl.getBoundingClientRect();
+                const targetY = window.pageYOffset + rect.top - headerHeight;
+                window.scrollTo({ top: Math.max(0, Math.floor(targetY)), behavior: 'smooth' });
+              }catch(e){ try{ coordsEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }catch(_){} }
               // 在短时延后再聚焦并选中，避免与滚动/重排冲突
               setTimeout(()=>{
                 try{ coordsEl.focus({ preventScroll: true }); if(typeof coordsEl.select === 'function') coordsEl.select(); }catch(e){}
-              }, 220);
+              }, 260);
             } else {
               // 回退到页面顶部以保证表单可见
               window.scrollTo({ top:0, behavior:'smooth' });
