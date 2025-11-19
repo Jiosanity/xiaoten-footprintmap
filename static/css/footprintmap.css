@@ -374,8 +374,14 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    box-sizing: border-box;
 }
 
 .footprint-photo-viewer-open {
