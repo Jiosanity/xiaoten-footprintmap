@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>足迹数据构建器 - XiaoTen FootprintMap</title>
+  <link rel="stylesheet" href="../static/css/footprintmap.css" />
+  <style>
+    body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; background:#f5f7fa; margin:0; }
+    header { padding:20px 24px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; }
+    header h1 { margin:0 0 6px; font-size:22px; }
+    header p { margin:0; opacity:.85; font-size:14px; }
+    main { display:flex; flex-wrap:wrap; gap:20px; padding:20px 24px; }
+    .panel { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:18px 20px; flex:1 1 420px; box-shadow:0 2px 6px rgba(0,0,0,.04); min-width:320px; }
+    .panel h2 { margin:0 0 14px; font-size:16px; color:#334155; display:flex; align-items:center; gap:6px; }
+    form .group { margin-bottom:12px; }
+    label { display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px; }
+    input[type=text], input[type=date], textarea, select { width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; background:#fff; }
+    textarea { resize:vertical; min-height:70px; }
+    .inline { display:flex; gap:10px; }
+    .inline .group { flex:1; }
+    button, .btn { cursor:pointer; border:1px solid #6366f1; background:#6366f1; color:#fff; padding:8px 14px; font-size:14px; border-radius:6px; transition:.15s; }
+    button.secondary, .btn.secondary { background:#fff; color:#374151; border-color:#cbd5e1; }
+    button.danger { background:#dc2626; border-color:#dc2626; }
+    button:hover, .btn:hover { filter:brightness(1.08); }
+    #map { height:360px; border-radius:8px; overflow:hidden; border:1px solid #cbd5e1; }
+    .photos-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+    .photos-list .photo-item { background:#f1f5f9; padding:4px 6px; border-radius:4px; font-size:11px; display:flex; align-items:center; gap:4px; }
+    .photos-list .photo-item button { background:none; color:#dc2626; border:none; padding:0 4px; font-size:12px; }
+    .location-list { max-height:300px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; padding:8px; background:#fff; }
+    .location-item { border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; margin-bottom:8px; background:#f8fafc; font-size:13px; position:relative; }
+    .location-item h3 { margin:0 0 4px; font-size:14px; color:#334155; }
+    .tag { display:inline-block; background:#6366f1; color:#fff; padding:2px 6px; font-size:11px; border-radius:4px; margin-right:4px; margin-top:4px; }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    pre#jsonOutput { background:#0f172a; color:#e2e8f0; padding:14px; border-radius:8px; font-size:13px; overflow:auto; max-height:320px; }
+    footer { text-align:center; padding:30px 20px; font-size:12px; color:#64748b; }
+    .split { display:flex; flex-direction:column; gap:12px; }
+    .import-block { border:1px dashed #94a3b8; padding:10px; border-radius:8px; background:#f8fafc; }
+    .small { font-size:11px; color:#64748b; }
+    @media (max-width:900px){ main{ flex-direction:column;} }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>足迹数据构建器</h1>
+    <p>可视化录入地点信息，生成符合 FootprintMap 规范的 JSON 数据。</p>
+  </header>
+  <main>
+    <section class="panel" style="flex:1 1 480px;">
+      <h2>📝 地点录入</h2>
+      <form id="locationForm" autocomplete="off">
+        <div class="group">
+          <label>名称 *</label>
+          <input type="text" id="name" required placeholder="如：北京" />
+        </div>
+        <div class="group">
+          <label>描述 *</label>
+          <textarea id="description" required placeholder="简要描述该地点"></textarea>
+        </div>
+        <div class="inline">
+          <div class="group">
+            <label>日期 *</label>
+            <input type="date" id="date" required />
+          </div>
+          <div class="group">
+            <label>坐标 (点击地图自动填入) *</label>
+            <input type="text" id="coordinates" required placeholder="lng,lat" />
+          </div>
+        </div>
+        <div class="inline">
+          <div class="group">
+            <label>分类（英文逗号分隔）</label>
+            <input type="text" id="categories" placeholder="2024,旅行,城市" />
+          </div>
+          <div class="group">
+            <label>标记颜色 *</label>
+            <select id="markerColor" required>
+              <option value="sunset">sunset</option>
+              <option value="ocean">ocean</option>
+              <option value="forest">forest</option>
+              <option value="amber">amber</option>
+              <option value="violet">violet</option>
+              <option value="citrus">citrus</option>
+            </select>
+          </div>
+        </div>
+        <div class="group">
+          <label>图片 URL（输入后回车或点击添加）</label>
+          <input type="text" id="photoInput" placeholder="https://...jpg" />
+          <div class="photos-list" id="photosList"></div>
+        </div>
+        <div class="inline">
+          <div class="group">
+            <label>关联链接 URL</label>
+            <input type="text" id="url" placeholder="https://你的博客文章" />
+          </div>
+          <div class="group">
+            <label>链接文字</label>
+            <input type="text" id="urlLabel" placeholder="阅读游记" />
+          </div>
+        </div>
+        <div class="controls">
+          <button type="submit">➕ 添加地点</button>
+          <button type="button" class="secondary" id="resetFormBtn">清空表单</button>
+        </div>
+        <p class="small">必填项：名称 / 描述 / 日期 / 坐标 / 标记颜色。</p>
+      </form>
+      <h2 style="margin-top:26px;">🗺️ 坐标拾取</h2>
+      <div id="map"></div>
+      <p class="small">点击地图即可写入经纬度（格式：lng,lat）。</p>
+    </section>
+
+    <section class="panel" style="flex:1 1 420px;">
+      <h2>📍 已添加地点</h2>
+      <div class="location-list" id="locationList"></div>
+      <div class="controls">
+        <button type="button" class="secondary" id="clearAllBtn">清空所有</button>
+        <button type="button" class="danger" id="removeLastBtn">删除最后一个</button>
+      </div>
+      <div class="import-block" style="margin-top:14px;">
+        <label style="font-weight:600; font-size:12px;">导入已有 JSON 文件</label>
+        <input type="file" id="importFile" accept="application/json" />
+        <p class="small">会尝试读取其中的 locations 并追加。</p>
+      </div>
+      <h2 style="margin-top:24px;">🧾 导出 JSON</h2>
+      <div class="controls">
+        <button type="button" id="generateBtn">生成 JSON</button>
+        <button type="button" class="secondary" id="copyBtn">复制到剪贴板</button>
+        <button type="button" class="secondary" id="downloadBtn">下载文件</button>
+      </div>
+      <pre id="jsonOutput" aria-label="输出 JSON"></pre>
+    </section>
+  </main>
+  <footer>
+    <div>Made with ❤️ XiaoTen-FootprintMap 数据构建器 · 本地保存草稿，不会上传。</div>
+  </footer>
+
+  <script src="https://webapi.amap.com/maps?v=2.0&key=4727334ebc13608dbe9ba75266c3d41a"></script>
+  <script>
+    const form = document.getElementById('locationForm');
+    const photosListEl = document.getElementById('photosList');
+    const photoInput = document.getElementById('photoInput');
+    const locationListEl = document.getElementById('locationList');
+    const jsonOutput = document.getElementById('jsonOutput');
+    let photosTemp = [];
+    let locations = [];
+
+    // 恢复草稿
+    try { const draft = localStorage.getItem('footprintmap_builder_locations'); if (draft) locations = JSON.parse(draft); } catch(e){}
+
+    function persistDraft(){ localStorage.setItem('footprintmap_builder_locations', JSON.stringify(locations)); }
+
+    function renderPhotosTemp(){
+      photosListEl.innerHTML = '';
+      photosTemp.forEach((url,idx)=>{
+        const div = document.createElement('div');
+        div.className='photo-item';
+        div.innerHTML = `<span>${url.replace(/^https?:\/\//,'').slice(0,40)}</span>`;
+        const btn = document.createElement('button');
+        btn.type='button'; btn.textContent='×';
+        btn.onclick=()=>{ photosTemp.splice(idx,1); renderPhotosTemp(); };
+        div.appendChild(btn); photosListEl.appendChild(div);
+      });
+    }
+
+    photoInput.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); addPhotoUrl(); }
+    });
+    function addPhotoUrl(){
+      const v = photoInput.value.trim(); if(!v) return; photosTemp.push(v); photoInput.value=''; renderPhotosTemp();
+    }
+
+    // 添加地点
+    form.addEventListener('submit', e=>{
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const date = document.getElementById('date').value.trim();
+      const coordinates = document.getElementById('coordinates').value.trim();
+      const markerColor = document.getElementById('markerColor').value.trim();
+      if(!name||!description||!date||!coordinates||!markerColor){ alert('请填写所有必填项'); return; }
+      const categoriesRaw = document.getElementById('categories').value.trim();
+      const url = document.getElementById('url').value.trim();
+      const urlLabel = document.getElementById('urlLabel').value.trim();
+      const categories = categoriesRaw ? categoriesRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+      locations.push({ name, coordinates, description, date, url, urlLabel, photos:[...photosTemp], categories, markerColor });
+      photosTemp=[]; renderPhotosTemp(); form.reset(); renderLocations(); persistDraft();
+    });
+
+    document.getElementById('resetFormBtn').onclick=()=>{ form.reset(); photosTemp=[]; renderPhotosTemp(); };
+    document.getElementById('clearAllBtn').onclick=()=>{ if(confirm('确定清空所有地点?')){ locations=[]; renderLocations(); persistDraft(); } };
+    document.getElementById('removeLastBtn').onclick=()=>{ locations.pop(); renderLocations(); persistDraft(); };
+
+    function renderLocations(){
+      locationListEl.innerHTML='';
+      locations.forEach((loc,idx)=>{
+        const item = document.createElement('div'); item.className='location-item';
+        const h = document.createElement('h3'); h.textContent = `${idx+1}. ${loc.name}`; item.appendChild(h);
+        const meta = document.createElement('div'); meta.textContent = `${loc.date} · ${loc.coordinates}`; meta.style.fontSize='11px'; meta.style.color='#64748b'; item.appendChild(meta);
+        const desc = document.createElement('div'); desc.textContent = loc.description.slice(0,120); desc.style.margin='6px 0'; item.appendChild(desc);
+        if(loc.categories && loc.categories.length){ const cWrap=document.createElement('div'); loc.categories.forEach(c=>{ const span=document.createElement('span'); span.className='tag'; span.textContent=c; cWrap.appendChild(span); }); item.appendChild(cWrap); }
+        if(loc.photos && loc.photos.length){ const p=document.createElement('div'); p.style.fontSize='11px'; p.style.marginTop='4px'; p.textContent = `📸 ${loc.photos.length} 张图片`; item.appendChild(p); }
+        if(loc.url){ const u=document.createElement('a'); u.href=loc.url; u.target='_blank'; u.textContent= loc.urlLabel || '链接'; u.style.display='inline-block'; u.style.fontSize='11px'; u.style.marginTop='4px'; item.appendChild(u); }
+        const delBtn = document.createElement('button'); delBtn.type='button'; delBtn.textContent='删除'; delBtn.className='danger'; delBtn.style.position='absolute'; delBtn.style.top='8px'; delBtn.style.right='8px';
+        delBtn.onclick=()=>{ locations.splice(idx,1); renderLocations(); persistDraft(); };
+        item.appendChild(delBtn); locationListEl.appendChild(item);
+      });
+    }
+
+    // 生成 JSON
+    document.getElementById('generateBtn').onclick=()=>{
+      const obj = { locations };
+      const text = JSON.stringify(obj, null, 2);
+      jsonOutput.textContent = text;
+    };
+    document.getElementById('copyBtn').onclick=()=>{
+      if(!jsonOutput.textContent){ alert('请先生成 JSON'); return; }
+      navigator.clipboard.writeText(jsonOutput.textContent).then(()=> alert('已复制到剪贴板')); };
+    document.getElementById('downloadBtn').onclick=()=>{
+      if(!jsonOutput.textContent){ alert('请先生成 JSON'); return; }
+      const blob = new Blob([jsonOutput.textContent], { type:'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'footprints.generated.json'; a.click(); URL.revokeObjectURL(a.href); };
+
+    // 导入文件
+    document.getElementById('importFile').addEventListener('change', e=>{
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader(); reader.onload=()=>{
+        try { const data = JSON.parse(reader.result); if(Array.isArray(data.locations)){ data.locations.forEach(l=>{ if(l.name && l.coordinates){ locations.push(l); } }); renderLocations(); persistDraft(); alert('导入并追加完成'); } else { alert('JSON 中不含 locations 数组'); } } catch(err){ alert('解析失败: '+ err.message); }
+      }; reader.readAsText(file);
+    });
+
+    // 初始渲染
+    renderLocations(); renderPhotosTemp();
+
+    // 地图初始化与点击拾取
+    const map = new AMap.Map('map',{ viewMode:'2D', zoom:4, center:[105,36] });
+    map.on('click', function(ev){ if(ev && ev.lnglat){ const { lng, lat } = ev.lnglat; document.getElementById('coordinates').value = lng.toFixed(6)+','+lat.toFixed(6); } });
+  </script>
+</body>
+</html>
