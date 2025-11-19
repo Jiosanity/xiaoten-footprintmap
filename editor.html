@@ -549,7 +549,8 @@
       showErrors(errs);
       clearInvalidHighlights(); applyInvalidHighlights(draftObj);
       if(errs.length){ return; }
-      if(editingIndex !== null){
+      const wasEditing = editingIndex !== null;
+      if(wasEditing){
         locations[editingIndex] = draftObj;
         editingIndex = null;
         document.getElementById('submitBtn').textContent = '✚ 添加地点';
@@ -559,14 +560,16 @@
       }
       photosTemp=[]; renderPhotosTemp(); form.reset(); renderLocations(); persistDraft(); generateJson(); selectedMarkerColor=''; document.getElementById('markerColor').value=''; selectedCategories=new Set(); renderCategoryOptions(); updateMarkerSelection();
       
-      // 滚动到最新添加的地点
-      setTimeout(() => {
-        const items = locationListEl.querySelectorAll('.location-item');
-        if(items.length > 0) {
-          const lastItem = items[items.length - 1];
-          lastItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }, 100);
+      // 仅在添加新地点时滚动到最新添加的地点；编辑保存时不滚动
+      if(!wasEditing){
+        setTimeout(() => {
+          const items = locationListEl.querySelectorAll('.location-item');
+          if(items.length > 0) {
+            const lastItem = items[items.length - 1];
+            lastItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }, 100);
+      }
     });
 
     document.getElementById('resetFormBtn').onclick=()=>{ form.reset(); photosTemp=[]; renderPhotosTemp(); };
@@ -700,7 +703,17 @@
           showErrors([]);
           document.getElementById('submitBtn').textContent = '✔ 保存修改';
           document.getElementById('cancelEditBtn').style.display = 'inline-block';
-          window.scrollTo({ top:0, behavior:'smooth' });
+          // 滚动并聚焦到坐标输入，方便用户调整坐标（若不可用则回退到地图或顶部）
+          const coordsEl = document.getElementById('coordinates');
+          const mapEl = document.getElementById('map');
+          if(coordsEl && typeof coordsEl.scrollIntoView === 'function'){
+            coordsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try{ coordsEl.focus({ preventScroll: true }); if(typeof coordsEl.select === 'function') coordsEl.select(); }catch(e){}
+          } else if(mapEl && typeof mapEl.scrollIntoView === 'function'){
+            mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else {
+            window.scrollTo({ top:0, behavior:'smooth' });
+          }
         };
         
         const delBtn = document.createElement('button'); 
