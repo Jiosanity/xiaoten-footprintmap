@@ -462,9 +462,17 @@
 }
 
 /* InfoWindow 暗色模式修复 */
-.dark .amap-info-content,
+.dark .amap-info-content {
+    background-color: rgba(33, 35, 40, 0.85) !important;
+}
+
 .dark .amap-info-outer,
 .dark .amap-info-contentContainer {
+    background-color: transparent !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .amap-info-sharp {
     background-color: rgba(33, 35, 40, 0.85) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
 }
