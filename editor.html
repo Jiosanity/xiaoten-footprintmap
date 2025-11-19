@@ -58,25 +58,27 @@
     .location-item {
       border:1px solid #e2e8f0;
       border-radius:6px;
-      padding:8px 10px 28px 28px;
-      margin-bottom:6px;
+      padding:10px 12px;
+      margin-bottom:8px;
       background:#f8fafc;
       font-size:13px;
       position:relative;
-      min-height:54px;
+      min-height:60px;
       box-sizing:border-box;
+      padding-left:30px;
+      padding-right:100px;
     }
     .location-item h3 {
-      margin:0 0 3px;
+      margin:0 0 5px;
       font-size:14px;
       color:#1f2937;
       font-weight:600;
-      line-height:1.3;
+      line-height:1.4;
     }
     .location-item .item-checkbox {
       position:absolute;
       left:8px;
-      top:8px;
+      top:12px;
       width:15px;
       height:15px;
       cursor:pointer;
@@ -85,40 +87,31 @@
     .location-item .item-meta {
       font-size:11px;
       color:#64748b;
-      margin-bottom:3px;
-      line-height:1.4;
+      margin-bottom:5px;
+      line-height:1.5;
     }
     .location-item .item-desc {
       color:#475569;
-      line-height:1.3;
-      margin-bottom:3px;
+      line-height:1.4;
+      margin-bottom:5px;
       word-break:break-all;
     }
     .location-item .item-actions {
       position:absolute;
-      top:6px;
-      right:6px;
+      top:50%;
+      right:8px;
+      transform:translateY(-50%);
       display:flex;
+      flex-direction:column;
       gap:4px;
+      align-items:stretch;
     }
     .location-item .item-actions button {
-      padding:4px 8px;
+      padding:5px 8px;
       font-size:11px;
-      min-width:36px;
+      min-width:44px;
       height:24px;
-    }
-    .location-item .item-nav {
-      position:absolute;
-      bottom:4px;
-      right:6px;
-      display:flex;
-      gap:4px;
-    }
-    .location-item .item-nav button {
-      padding:2px 5px;
-      font-size:12px;
-      width:26px;
-      height:22px;
+      line-height:1;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -277,7 +270,6 @@
         <button type="button" id="generateBtn">生成 JSON</button>
         <button type="button" class="secondary" id="copyBtn">复制到剪贴板</button>
         <button type="button" class="secondary" id="downloadBtn">下载文件</button>
-        <button type="button" class="secondary" id="toggleAutoPreviewBtn" data-on="1">关闭实时预览</button>
         <button type="button" class="secondary" id="toggleSortDateBtn" data-on="0">开启按日期排序</button>
         <button type="button" class="secondary" id="togglePruneEmptyBtn" data-on="1">剔除空字段: 开</button>
       </div>
@@ -303,11 +295,9 @@
     const jsonOutput = document.getElementById('jsonOutput');
     const formErrorsEl = document.getElementById('formErrors');
     const previewMapEl = document.getElementById('previewMap');
-    const toggleAutoPreviewBtn = document.getElementById('toggleAutoPreviewBtn');
     let photosTemp = [];
     let locations = [];
     let editingIndex = null; // 若不为 null 则表示当前为编辑模式
-    let autoPreview = true;
     let previewMapInstance = null;
     let sortByDate = false;
     let pruneEmpty = true;
@@ -607,44 +597,6 @@
         actionsDiv.appendChild(delBtn);
         item.appendChild(actionsDiv);
         
-        // 导航按钮组
-        const navDiv = document.createElement('div');
-        navDiv.className='item-nav';
-        
-        const upBtn = document.createElement('button'); 
-        upBtn.type='button'; 
-        upBtn.innerHTML='↑'; 
-        upBtn.className='secondary';
-        upBtn.title='上移';
-        upBtn.onclick=()=>{ 
-          if(idx>0){ 
-            const mv=locations.splice(idx,1)[0]; 
-            locations.splice(idx-1,0,mv); 
-            renderLocations(); 
-            persistDraft(); 
-            triggerAutoPreview(); 
-          } 
-        };
-        
-        const downBtn = document.createElement('button'); 
-        downBtn.type='button'; 
-        downBtn.innerHTML='↓'; 
-        downBtn.className='secondary';
-        downBtn.title='下移';
-        downBtn.onclick=()=>{ 
-          if(idx < locations.length-1){ 
-            const mv=locations.splice(idx,1)[0]; 
-            locations.splice(idx+1,0,mv); 
-            renderLocations(); 
-            persistDraft(); 
-            triggerAutoPreview(); 
-          } 
-        };
-        
-        navDiv.appendChild(upBtn);
-        navDiv.appendChild(downBtn);
-        item.appendChild(navDiv);
-        
         locationListEl.appendChild(item);
       });
       enableDragForItems();
@@ -688,12 +640,6 @@
       if(!jsonOutput.textContent){ alert('请先生成 JSON'); return; }
       const blob = new Blob([jsonOutput.textContent], { type:'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'footprints.generated.json'; a.click(); URL.revokeObjectURL(a.href); };
-    toggleAutoPreviewBtn.onclick=()=>{
-      autoPreview = !autoPreview;
-      toggleAutoPreviewBtn.textContent = autoPreview ? '关闭实时预览' : '开启实时预览';
-      toggleAutoPreviewBtn.dataset.on = autoPreview ? '1':'0';
-      if(autoPreview){ triggerAutoPreview(); }
-    };
     document.getElementById('toggleSortDateBtn').onclick=()=>{ sortByDate = !sortByDate; document.getElementById('toggleSortDateBtn').textContent = sortByDate ? '关闭按日期排序' : '开启按日期排序'; triggerAutoPreview(); };
     document.getElementById('togglePruneEmptyBtn').onclick=()=>{ pruneEmpty = !pruneEmpty; document.getElementById('togglePruneEmptyBtn').textContent = '剔除空字段: ' + (pruneEmpty ? '开':'关'); triggerAutoPreview(); };
     // 批量删除按钮逻辑
@@ -752,17 +698,35 @@
     map.on('click', function(ev){ if(ev && ev.lnglat){ const { lng, lat } = ev.lnglat; document.getElementById('coordinates').value = lng.toFixed(6)+','+lat.toFixed(6); } });
     // 地点搜索
     let placeSearch = null;
-    AMap.plugin('AMap.PlaceSearch', ()=>{ placeSearch = new AMap.PlaceSearch({ pageSize:10, pageIndex:1, city:'全国', citylimit:false }); });
+    AMap.plugin('AMap.PlaceSearch', ()=>{ 
+      placeSearch = new AMap.PlaceSearch({ 
+        extensions: 'base'
+      }); 
+    });
     document.getElementById('placeSearchBtn').onclick=()=> doPlaceSearch();
     document.getElementById('placeSearchInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doPlaceSearch(); } });
     function doPlaceSearch(){
-      const kw = document.getElementById('placeSearchInput').value.trim(); if(!kw) return;
+      const kw = document.getElementById('placeSearchInput').value.trim(); 
+      if(!kw) return;
       if(!placeSearch){ alert('搜索服务尚未就绪'); return; }
       placeSearch.search(kw, (status, result)=>{
-        if(status==='complete' && result.info==='OK' && result.poiList && result.poiList.pois && result.poiList.pois.length){
+        if(status==='complete' && result && result.poiList && result.poiList.pois && result.poiList.pois.length > 0){
           const poi = result.poiList.pois[0];
-          if(poi.location){ const lng = poi.location.lng; const lat = poi.location.lat; map.setZoomAndCenter(12, [lng, lat]); document.getElementById('coordinates').value = lng.toFixed(6)+','+lat.toFixed(6); }
-        } else { alert('未找到相关地点，请尝试更具体的关键词'); }
+          if(poi.location){ 
+            const lng = poi.location.lng; 
+            const lat = poi.location.lat; 
+            map.setZoomAndCenter(14, [lng, lat]); 
+            document.getElementById('coordinates').value = lng.toFixed(6)+','+lat.toFixed(6);
+            // 在地图上添加临时标记
+            map.clearMap();
+            new AMap.Marker({
+              position: [lng, lat],
+              map: map
+            });
+          }
+        } else { 
+          alert('未找到相关地点，请尝试更具体的关键词（如：北京天安门、杭州西湖）'); 
+        }
       });
     }
 
@@ -773,7 +737,7 @@
       const previewMapEl = document.getElementById('previewMap');
       if(!previewMapEl) return;
       if(!locations.length){ 
-        previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;">暂无地点，添加后显示预览。</div>'; 
+        previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;">暂无足迹数据，请添加地点或导入 JSON 文件后即可展示。</div>'; 
         return; 
       }
       // 生成临时数据文件 Blob
@@ -804,21 +768,30 @@
       const obj = { locations: exportLocations };
       const blob = new Blob([JSON.stringify(obj)], { type:'application/json' });
       const url = URL.createObjectURL(blob);
-      previewMapEl.setAttribute('data-json', url);
-      // 重新初始化 footprint-map 组件
-      if(window.FootprintMap && typeof window.FootprintMap.bootstrapAll === 'function'){
-        window.FootprintMap.bootstrapAll();
-      } else if(window.FootprintMap){
-        // 兼容旧版本
-        window.FootprintMap(previewMapEl);
-      }
+      
+      // 清空并重建容器以强制重新初始化
+      const oldId = previewMapEl.id;
+      const oldClass = previewMapEl.className;
+      const oldStyle = previewMapEl.getAttribute('style');
+      const oldKey = previewMapEl.getAttribute('data-amap-key');
+      
+      wrap.innerHTML = `<div id="${oldId}" class="${oldClass}" style="${oldStyle}" data-amap-key="${oldKey}" data-json="${url}"></div>`;
+      
+      // 等待 DOM 更新后初始化
+      setTimeout(() => {
+        const newEl = document.getElementById(oldId);
+        if(window.FootprintMap && typeof window.FootprintMap.bootstrapAll === 'function'){
+          window.FootprintMap.bootstrapAll();
+        }
+      }, 100);
+      
       // 释放旧 blob
       if(wrap._lastBlobUrl && wrap._lastBlobUrl!==url){
         URL.revokeObjectURL(wrap._lastBlobUrl);
       }
       wrap._lastBlobUrl = url;
     }
-    function triggerAutoPreview(){ if(autoPreview){ generateJson(); renderPreviewMap(); } }
+    function triggerAutoPreview(){ generateJson(); renderPreviewMap(); }
     // 初始尝试预览
     triggerAutoPreview();
 
