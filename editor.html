@@ -290,19 +290,24 @@
         <button type="button" class="secondary" id="copyBtn">复制到剪贴板</button>
         <button type="button" class="secondary" id="downloadBtn">下载文件</button>
         <button type="button" class="secondary" id="toggleSortDateBtn" data-on="0">开启按日期排序</button>
-        <button type="button" class="secondary" id="togglePruneEmptyBtn" data-on="1">剔除空字段: 开</button>
       </div>
-      <pre id="jsonOutput" aria-label="输出 JSON"></pre>
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:24px;">
+      <pre id="jsonOutput" aria-label="输出 JSON" style="min-height:340px;"></pre>
+    </section>
+  </main>
+  
+  <div style="max-width:1400px; margin:0 auto; padding:0 24px 20px;">
+    <section class="panel" style="width:100%;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
         <h2 style="margin:0;">🔍 实时预览</h2>
         <button type="button" class="secondary" id="refreshPreviewBtn" style="font-size:13px; padding:7px 14px;">🔄 刷新预览</button>
       </div>
       <div id="previewMapWrap" style="margin-top:12px;">
-        <div id="previewMap" class="footprint-map" style="width:100%;height:400px;" data-amap-key="4727334ebc13608dbe9ba75266c3d41a"></div>
+        <div id="previewMap" class="footprint-map" style="width:100%;height:500px;" data-amap-key="4727334ebc13608dbe9ba75266c3d41a"></div>
       </div>
-      <p class="small">预览为正式 FootprintMap 组件（含聚类、筛选、主题切换等），导出的 JSON 可直接用于生产环境。点击"刷新预览"更新地图。</p>
+      <p class="small">预览为正式 FootprintMap 组件（含聚类、筛选、主题切换等），导出的 JSON 可直接用于生产环境。添加/编辑地点后，点击"刷新预览"更新地图。</p>
     </section>
-  </main>
+  </div>
+  
   <footer>
     <div>Made with ❤️ XiaoTen-FootprintMap 数据构建器 · 本地保存草稿，不会上传。</div>
   </footer>
@@ -519,7 +524,7 @@
       document.getElementById('submitBtn').textContent = '✚ 添加地点';
       document.getElementById('cancelEditBtn').style.display = 'none';
     };
-    document.getElementById('clearAllBtn').onclick=()=>{ if(confirm('确定清空所有地点?')){ locations=[]; renderLocations(); persistDraft(); jsonOutput.textContent=''; const wrap = document.getElementById('previewMapWrap'); const previewMapEl = document.getElementById('previewMap'); if(previewMapEl) previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;">暂无足迹数据，请添加地点或导入 JSON 文件后即可展示。</div>'; } };
+    document.getElementById('clearAllBtn').onclick=()=>{ if(confirm('确定清空所有地点?')){ locations=[]; renderLocations(); persistDraft(); jsonOutput.textContent=''; const wrap = document.getElementById('previewMapWrap'); const previewMapEl = document.getElementById('previewMap'); if(previewMapEl) previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点或导入 JSON 文件，然后点击"刷新预览"。</div>'; } };
     document.getElementById('removeLastBtn').onclick=()=>{ locations.pop(); renderLocations(); persistDraft(); generateJson(); };
 
     function renderLocations(){
@@ -715,7 +720,6 @@
       const blob = new Blob([jsonOutput.textContent], { type:'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'footprints.generated.json'; a.click(); URL.revokeObjectURL(a.href); };
     document.getElementById('toggleSortDateBtn').onclick=()=>{ sortByDate = !sortByDate; document.getElementById('toggleSortDateBtn').textContent = sortByDate ? '关闭按日期排序' : '开启按日期排序'; generateJson(); };
-    document.getElementById('togglePruneEmptyBtn').onclick=()=>{ pruneEmpty = !pruneEmpty; document.getElementById('togglePruneEmptyBtn').textContent = '剔除空字段: ' + (pruneEmpty ? '开':'关'); generateJson(); };
     document.getElementById('refreshPreviewBtn').onclick=()=>{ renderPreviewMap(); };
     // 批量删除按钮逻辑
     const deleteSelectedBtn = document.createElement('button');
@@ -827,7 +831,7 @@
       if(!locations.length){ 
         // 只在初始化时显示提示，不清空已有内容
         if(!wrap._initialized) {
-          previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;">暂无足迹数据，请添加地点或导入 JSON 文件后即可展示。</div>'; 
+          previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点或导入 JSON 文件，然后点击"刷新预览"。</div>'; 
           wrap._initialized = true;
         }
         return; 
