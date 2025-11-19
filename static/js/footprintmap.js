@@ -475,4 +475,10 @@
   }
 
   document.addEventListener('DOMContentLoaded', init);
+  
+  // 暴露 API 供外部调用
+  window.FootprintMap = {
+    init: init,
+    bootstrapMap: bootstrapMap
+  };
 })();
