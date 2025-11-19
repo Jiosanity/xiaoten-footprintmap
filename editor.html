@@ -5,201 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>足迹数据构建器 - XiaoTen FootprintMap</title>
   <link rel="stylesheet" href="static/css/footprintmap.css" />
-  <style>
-    body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; background:#f5f7fa; margin:0; padding:0; }
-    header { padding:20px 24px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; }
-    header h1 { margin:0 0 6px; font-size:22px; }
-    header p { margin:0; opacity:.85; font-size:14px; }
-    main { display:flex; flex-wrap:wrap; gap:20px; padding:20px 24px; max-width:1400px; margin:0 auto; }
-    .panel { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:20px 24px; flex:1 1 420px; min-width:320px; box-sizing:border-box; }
-    .panel h2 { margin:0 0 16px; font-size:16px; color:#334155; display:flex; align-items:center; gap:6px; }
-    form .group { margin-bottom:14px; }
-    label { display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:5px; }
-    input[type=text], input[type=date], input[type=file], textarea, select { 
-      width:100%; 
-      padding:9px 12px; 
-      border:1px solid #cbd5e1; 
-      border-radius:6px; 
-      font-size:14px; 
-      background:#fff; 
-      box-sizing:border-box;
-      font-family: inherit;
-    }
-    input[type=text]:focus, input[type=date]:focus, textarea:focus, select:focus {
-      outline:none;
-      border-color:#6366f1;
-    }
-    input[type=checkbox] { cursor:pointer; }
-    textarea { resize:vertical; min-height:80px; line-height:1.5; }
-    .inline { display:flex; gap:12px; }
-    .inline .group { flex:1; min-width:0; }
-    button, .btn { 
-      cursor:pointer; 
-      border:1px solid #6366f1; 
-      background:#6366f1; 
-      color:#fff; 
-      padding:9px 16px; 
-      font-size:14px; 
-      border-radius:6px; 
-      font-weight:500;
-      white-space:nowrap;
-    }
-    button.secondary, .btn.secondary { background:#fff; color:#374151; border-color:#cbd5e1; }
-    button.danger { background:#dc2626; border-color:#dc2626; }
-    button:hover, .btn:hover { opacity:0.9; }
-    button:active, .btn:active { opacity:0.8; }
-    button:disabled { opacity:0.5; cursor:not-allowed; }
-    #map { height:360px; border-radius:8px; overflow:hidden; border:1px solid #cbd5e1; margin-bottom:8px; }
-    .photos-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-    .photos-list .photo-item { background:#f1f5f9; padding:5px 8px; border-radius:5px; font-size:11px; display:flex; align-items:center; gap:6px; border:1px solid #e2e8f0; }
-    .photos-list .photo-item button { background:none; color:#dc2626; border:none; padding:0 4px; font-size:14px; cursor:pointer; line-height:1; }
-    .photos-list .photo-item button:hover { color:#991b1b; }
-    .location-list { max-height:320px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; padding:10px; background:#fff; margin-bottom:12px; }
-    .location-item {
-      border:1px solid #e2e8f0;
-      border-radius:6px;
-      padding:10px 12px;
-      margin-bottom:8px;
-      background:#f8fafc;
-      font-size:13px;
-      position:relative;
-      min-height:60px;
-      box-sizing:border-box;
-      padding-left:30px;
-      padding-right:120px;
-    }
-    .location-item h3 {
-      margin:0 0 5px;
-      font-size:14px;
-      color:#1f2937;
-      font-weight:600;
-      line-height:1.4;
-    }
-    .location-item .item-checkbox {
-      position:absolute;
-      left:8px;
-      top:12px;
-      width:15px;
-      height:15px;
-      cursor:pointer;
-      accent-color:#6366f1;
-    }
-    .location-item .item-meta {
-      font-size:11px;
-      color:#64748b;
-      margin-bottom:5px;
-      line-height:1.5;
-    }
-    .location-item .item-desc {
-      color:#475569;
-      line-height:1.4;
-      margin-bottom:5px;
-      word-break:break-all;
-    }
-    .location-item .item-actions {
-      position:absolute;
-      top:50%;
-      right:8px;
-      transform:translateY(-50%);
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      align-items:stretch;
-    }
-    .location-item .item-actions button {
-      padding:5px 8px;
-      font-size:11px;
-      min-width:44px;
-      height:24px;
-      line-height:1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .location-item .item-nav {
-      position:absolute;
-      top:50%;
-      right:56px;
-      transform:translateY(-50%);
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-    }
-    .location-item .item-nav button {
-      padding:3px 6px;
-      font-size:12px;
-      width:28px;
-      height:24px;
-      line-height:1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .tag { display:inline-block; background:#6366f1; color:#fff; padding:3px 8px; font-size:11px; border-radius:4px; margin-right:4px; margin-top:4px; }
-    .controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-    pre#jsonOutput { background:#0f172a; color:#e2e8f0; padding:16px; border-radius:8px; font-size:12px; overflow:auto; min-height:470px; max-height:470px; line-height:1.6; margin-top:12px; }
-    footer { text-align:center; padding:30px 20px; font-size:12px; color:#64748b; }
-    .split { display:flex; flex-direction:column; gap:12px; }
-    .import-block { border:1px dashed #94a3b8; padding:12px; border-radius:8px; background:#f8fafc; }
-    .import-block input[type=file] { padding:6px 8px; font-size:13px; }
-    .small { font-size:11px; color:#64748b; margin-top:6px; line-height:1.4; }
-    .marker-color-palette { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
-    .marker-color-swatch { 
-      width:34px; 
-      height:34px; 
-      border-radius:50%; 
-      cursor:pointer; 
-      position:relative; 
-      box-shadow:0 2px 4px rgba(0,0,0,.2); 
-      border:3px solid #fff; 
-      outline:none;
-      transition:all 0.2s;
-    }
-    .marker-color-swatch[data-selected="1"] { box-shadow:0 0 0 3px #6366f1; }
-    .marker-color-swatch[data-none="1"] { background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-size:12px; color:#475569; font-weight:700; }
-    .tags-options { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-    .tag-option { 
-      padding:5px 10px; 
-      background:#e2e8f0; 
-      color:#334155; 
-      font-size:12px; 
-      border-radius:16px; 
-      cursor:pointer; 
-      user-select:none; 
-      line-height:18px; 
-      display:flex; 
-      align-items:center; 
-      gap:4px;
-      border:1px solid transparent;
-    }
-    .tag-option[data-selected="1"] { background:#6366f1; color:#fff; border-color:#6366f1; }
-    .tag-option button { background:none; border:none; color:inherit; cursor:pointer; font-size:14px; padding:0 2px; line-height:1; }
-    .tag-option button:hover { opacity:0.7; }
-    @media (max-width:640px){ 
-      .marker-color-swatch{ width:28px; height:28px; border-width:2px; } 
-      .panel { padding:16px 18px; }
-      main { padding:16px; }
-      .inline { flex-direction:column; gap:10px; }
-      input[type=text], input[type=date], textarea, select { font-size:16px; }
-    }
-    @media (max-width:900px){ 
-      main{ flex-direction:column; } 
-    }
-  </style>
+  <link rel="stylesheet" href="static/css/editor.css" />
 </head>
 <body>
   <header>
     <h1>足迹数据构建器</h1>
     <p>可视化录入地点信息，生成符合 XiaoTen-FootprintMap 规范的 JSON 数据。</p>
-    <div style="margin-top:12px;">
-      <a href="index.html" style="color:#fff;text-decoration:none;opacity:0.9;font-size:13px;border:1px solid rgba(255,255,255,0.3);padding:6px 12px;border-radius:6px;display:inline-block;">← 返回演示页</a>
+    <div class="mt-12">
+      <a href="index.html" class="back-link">← 返回演示页</a>
     </div>
   </header>
   <main>
-    <section class="panel" style="flex:1 1 480px;">
+    <section class="panel panel--large">
       <h2>📝 地点录入</h2>
       <form id="locationForm" autocomplete="off">
-        <div id="formErrors" style="display:none; margin-bottom:12px; padding:8px 10px; border:1px solid #dc2626; background:#fef2f2; color:#b91c1c; border-radius:6px; font-size:12px;"></div>
+        <div id="formErrors"></div>
         <div class="group">
           <label>名称 *（必填）</label>
           <input type="text" id="name" required placeholder="如：北京" aria-required="true" />
@@ -226,17 +46,17 @@
         <div class="group">
           <label>分类（多选，默认：常驻 / 旅行 / 游记）</label>
           <div id="categoryOptions" class="tags-options" aria-label="分类多选"></div>
-          <div style="display:flex; gap:8px; margin-top:6px;">
-            <input type="text" id="newCategoryInput" placeholder="输入后回车或点击添加" style="flex:1;" />
+          <div class="inline mt-6">
+            <input type="text" id="newCategoryInput" placeholder="输入后回车或点击添加" />
             <button type="button" class="secondary" id="addCategoryBtn">添加分类</button>
           </div>
           <div class="small">点击标签切换选中，自定义分类可添加后再点亮。</div>
         </div>
         <div class="group">
           <label>图片 URL（输入后回车或点击添加）</label>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="photoInput" placeholder="https://...jpg" style="flex:1;" />
-            <button type="button" class="secondary" id="addPhotoBtn" style="white-space:nowrap;">添加图片</button>
+          <div class="inline">
+            <input type="text" id="photoInput" placeholder="https://...jpg" />
+            <button type="button" class="secondary" id="addPhotoBtn">添加图片</button>
           </div>
           <div class="photos-list" id="photosList"></div>
         </div>
@@ -253,59 +73,59 @@
         <div class="controls">
           <button type="submit" id="submitBtn">✚ 添加地点</button>
           <button type="button" class="secondary" id="resetFormBtn">清空表单</button>
-          <button type="button" class="secondary" id="cancelEditBtn" style="display:none;">取消编辑</button>
+          <button type="button" class="secondary" id="cancelEditBtn">取消编辑</button>
         </div>
         <p class="small">必填项：名称、坐标。其他字段可选但推荐填写描述/日期以丰富信息。</p>
       </form>
-      <h2 style="margin-top:26px;">🗺️ 坐标拾取</h2>
-      <div style="display:flex; gap:8px; margin-bottom:8px;">
-        <input type="text" id="placeSearchInput" placeholder="搜索地点以定位拾取，如：杭州西湖" style="flex:1;" />
+      <h2 class="mt-26">🗺️ 坐标拾取</h2>
+      <div class="search-row">
+        <input type="text" id="placeSearchInput" placeholder="搜索地点以定位拾取，如：杭州西湖" />
         <button type="button" class="secondary" id="placeSearchBtn">搜索</button>
       </div>
       <div id="map"></div>
       <p class="small">直接点击地图任意位置即可拾取坐标（支持全球）。搜索功能仅支持中国境内地点，国外地点请通过地图缩放平移后点击获取。</p>
     </section>
 
-    <section class="panel" style="flex:1 1 420px;">
+    <section class="panel">
       <h2>📍 已添加地点</h2>
       <div class="location-list" id="locationList"></div>
       <div class="controls">
         <button type="button" class="secondary" id="clearAllBtn">清空所有</button>
         <button type="button" class="danger" id="removeLastBtn">删除最后一个</button>
       </div>
-      <div class="import-block" style="margin-top:14px;">
-        <label style="font-weight:600; font-size:12px;">导入已有 JSON 文件</label>
+      <div class="import-block">
+        <label class="import-label">导入已有 JSON 文件</label>
         <input type="file" id="importFile" accept="application/json" />
-        <div style="margin-top:6px;">
-          <label style="display:flex; align-items:center; gap:6px; font-weight:400;">
+        <div class="mt-6">
+          <label class="label-inline">
             <input type="checkbox" id="importAutoSort" />
-            <span style="font-size:11px;">导入后自动按日期排序</span>
+            <span class="small-text">导入后自动按日期排序</span>
           </label>
         </div>
         <p class="small">会尝试读取其中的 locations 并追加。</p>
       </div>
-      <h2 style="margin-top:24px;">🧾 导出 JSON</h2>
+      <h2 class="mt-24">🧾 导出 JSON</h2>
       <div class="controls">
         <button type="button" id="generateBtn">生成 JSON</button>
         <button type="button" class="secondary" id="copyBtn">复制到剪贴板</button>
         <button type="button" class="secondary" id="downloadBtn">下载文件</button>
         <button type="button" class="secondary" id="toggleSortDateBtn" data-on="0">开启按日期排序</button>
       </div>
-      <pre id="jsonOutput" aria-label="输出 JSON" style="min-height:340px;"></pre>
+      <pre id="jsonOutput" aria-label="输出 JSON"></pre>
     </section>
   </main>
   
-  <div style="max-width:1400px; margin:0 auto; padding:0 24px 20px;">
-    <section class="panel" style="width:100%;">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <h2 style="margin:0;">🔍 实时预览</h2>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button type="button" class="secondary" id="refreshPreviewBtn" style="font-size:13px; padding:7px 14px;">🔄 刷新预览</button>
-          <button type="button" class="secondary" id="toggleThemeBtn" style="font-size:13px; padding:7px 14px;">🌓 主题</button>
-        </div>
+    <div class="container">
+    <section class="panel panel--full">
+      <div class="panel-header">
+        <h2 class="no-margin">🔍 实时预览</h2>
+        <div class="panel-actions">
+            <button type="button" class="secondary" id="refreshPreviewBtn">🔄 刷新预览</button>
+            <button type="button" class="secondary" id="toggleThemeBtn">🌓 主题</button>
+          </div>
       </div>
-      <div id="previewMapWrap" style="margin-top:12px;">
-        <div id="previewMap" class="footprint-map" style="width:100%;height:500px;" data-amap-key="4727334ebc13608dbe9ba75266c3d41a"></div>
+      <div id="previewMapWrap">
+        <div id="previewMap" class="footprint-map" data-amap-key="4727334ebc13608dbe9ba75266c3d41a"></div>
       </div>
       <p class="small">预览为正式 FootprintMap 组件（含聚类、筛选、主题切换等），导出的 JSON 可直接用于生产环境。添加/编辑地点后，点击"刷新预览"更新地图。</p>
     </section>
@@ -313,7 +133,7 @@
   
   <footer>
     <div>Made with ❤️ XiaoTen-FootprintMap 数据构建器 · 本地保存草稿，不会上传。</div>
-    <div style="margin-top:8px;font-size:12px;color:#94a3b8;">© <a href="https://www.xiaoten.com" target="_blank" rel="noopener noreferrer">XiaoTen</a></div>
+    <div class="footer-note">© <a href="https://www.xiaoten.com" target="_blank" rel="noopener noreferrer">XiaoTen</a></div>
   </footer>
 
   <script>
@@ -325,615 +145,29 @@
   <script defer src="static/js/footprintmap.js"></script>
   <script src="static/js/theme.js"></script>
   <script src="static/js/utils.js"></script>
+  <script src="static/js/editor-utils.js"></script>
+  <script src="static/js/editor-render.js"></script>
+  <script src="static/js/editor-form.js"></script>
+  <script src="static/js/editor-state.js"></script>
+  <script src="static/js/editor-preview.js"></script>
+  <script src="static/js/editor-actions.js"></script>
   <script>
-    const form = document.getElementById('locationForm');
-    const photosListEl = document.getElementById('photosList');
-    const photoInput = document.getElementById('photoInput');
-    const locationListEl = document.getElementById('locationList');
-    const jsonOutput = document.getElementById('jsonOutput');
-    const formErrorsEl = document.getElementById('formErrors');
-    const previewMapEl = document.getElementById('previewMap');
-    let photosTemp = [];
-    let locations = [];
-    let editingIndex = null; // 若不为 null 则表示当前为编辑模式
-    let previewMapInstance = null;
-    let sortByDate = false;
-    let pruneEmpty = true;
-    let importAutoSort = false;
-    const defaultCategories = ['常驻','旅行','游记'];
-    let selectedCategories = new Set();
-    let selectedMarkerColor = '';
-    
-    // localStorage 辅助函数由共享文件提供（static/js/utils.js）
-    // 全局可直接使用 `lsGet` / `lsSet` 或 `Utils.lsGet` / `Utils.lsSet`
-
-    // 恢复导入自动排序偏好
-    importAutoSort = lsGet('footprintmap_builder_importAutoSort','false') === 'true';
-    if(document.getElementById('importAutoSort')) document.getElementById('importAutoSort').checked = importAutoSort;
-    const markerGradients = {
-      sunset: 'linear-gradient(135deg, #ffb347, #ff6f61)',
-      ocean: 'linear-gradient(135deg, #06beb6, #48b1bf)',
-      forest: 'linear-gradient(135deg, #5ee7df, #39a37c)',
-      amber: 'linear-gradient(135deg, #f6d365, #fda085)',
-      violet: 'linear-gradient(135deg, #a18cd1, #fbc2eb)',
-      citrus: 'linear-gradient(135deg, #fdfb8f, #a1ffce)'
-    };
-
-    // 恢复草稿
-    const draft = lsGet('footprintmap_builder_locations', null);
-    if(draft){ try{ locations = JSON.parse(draft); }catch(e){} }
-
-    function persistDraft(){ lsSet('footprintmap_builder_locations', JSON.stringify(locations)); }
-
-    function renderPhotosTemp(){
-      photosListEl.innerHTML = '';
-      photosTemp.forEach((url,idx)=>{
-        const div = document.createElement('div');
-        div.className='photo-item';
-        div.innerHTML = `<span>${url.replace(/^https?:\/\//,'').slice(0,40)}</span>`;
-        const btn = document.createElement('button');
-        btn.type='button'; btn.textContent='×';
-        btn.onclick=()=>{ photosTemp.splice(idx,1); renderPhotosTemp(); };
-        div.appendChild(btn); photosListEl.appendChild(div);
-      });
-    }
-
-    photoInput.addEventListener('keydown', e=>{
-      if(e.key==='Enter'){ e.preventDefault(); addPhotoUrl(); }
-    });
-    function addPhotoUrl(){
-      const v = photoInput.value.trim(); if(!v) return; photosTemp.push(v); photoInput.value=''; renderPhotosTemp();
-    }
-
-    // 校验函数
-    function validateCoordinates(str){
-      const re = /^\s*(-?\d+(?:\.\d+)?)[,，]\s*(-?\d+(?:\.\d+)?)\s*$/;
-      const m = re.exec(str);
-      if(!m) return null;
-      const lng = parseFloat(m[1]); const lat = parseFloat(m[2]);
-      if(Math.abs(lng)>180 || Math.abs(lat)>90) return null;
-      return { lng, lat };
-    }
-    function isValidUrl(str){
-      if(!str) return true; // 空允许
-      try { const u = new URL(str); return ['http:','https:'].includes(u.protocol); } catch(e){ return false; }
-    }
-    function collectErrors(fields){
-      const errs = [];
-      if(!fields.name) errs.push('名称不能为空');
-      if(!fields.coordinates) errs.push('坐标不能为空');
-      if(fields.coordinates && !validateCoordinates(fields.coordinates)) errs.push('坐标格式错误或范围非法 (lng,lat)');
-      if(fields.url && !isValidUrl(fields.url)) errs.push('关联链接 URL 非法');
-      for(const p of fields.photos){ if(!isValidUrl(p)) { errs.push('图片 URL 非法: '+p); break; } }
-      const duplicateIndex = locations.findIndex((l,i)=> l.name === fields.name && i!==editingIndex);
-      if(duplicateIndex !== -1) errs.push('名称已存在："'+fields.name+'"');
-      return errs;
-    }
-    function showErrors(errs){
-      if(!errs.length){ formErrorsEl.style.display='none'; formErrorsEl.textContent=''; return; }
-      formErrorsEl.style.display='block'; formErrorsEl.innerHTML = errs.map(e=>`<div>• ${e}</div>`).join('');
-    }
-
-    function clearInvalidHighlights(){
-      form.querySelectorAll('.invalid').forEach(el=> el.classList.remove('invalid'));
-    }
-    function applyInvalidHighlights(fields){
-      if(!fields.name) document.getElementById('name').classList.add('invalid');
-      if(!fields.coordinates || !validateCoordinates(fields.coordinates)) document.getElementById('coordinates').classList.add('invalid');
-      if(fields.url && !isValidUrl(fields.url)) document.getElementById('url').classList.add('invalid');
-      if(fields.photos.some(p=>!isValidUrl(p))) photoInput.classList.add('invalid');
-    }
-
-    // 拖拽排序
-    function enableDragForItems(){
-      locationListEl.querySelectorAll('.location-item').forEach(item=>{
-        item.draggable = true;
-        item.addEventListener('dragstart', e=>{
-          e.dataTransfer.setData('text/plain', item.dataset.idx);
-          item.classList.add('dragging');
-        });
-        item.addEventListener('dragend', ()=> item.classList.remove('dragging'));
-        item.addEventListener('dragover', e=> e.preventDefault());
-        item.addEventListener('drop', e=>{
-          e.preventDefault();
-          const from = parseInt(e.dataTransfer.getData('text/plain'),10);
-          const to = parseInt(item.dataset.idx,10);
-          if(isNaN(from)||isNaN(to)||from===to) return;
-          const moved = locations.splice(from,1)[0];
-          locations.splice(to,0,moved);
-          renderLocations(); persistDraft(); generateJson();
-        });
-      });
-    }
-
-    // 分类与颜色渲染
-    function renderCategoryOptions(){
-      const wrap = document.getElementById('categoryOptions');
-      if(!wrap) return;
-      wrap.innerHTML='';
-      const all = Array.from(new Set([...defaultCategories, ...selectedCategories]));
-      all.forEach(cat=>{
-        const div = document.createElement('div');
-        div.className='tag-option';
-        div.textContent = cat;
-        div.setAttribute('role','checkbox');
-        div.dataset.val = cat;
-        if(selectedCategories.has(cat)) { div.dataset.selected='1'; div.setAttribute('aria-checked','true'); }
-        else div.setAttribute('aria-checked','false');
-        div.onclick=()=>{ if(selectedCategories.has(cat)) selectedCategories.delete(cat); else selectedCategories.add(cat); renderCategoryOptions(); };
-        if(!defaultCategories.includes(cat)){
-          const delBtn = document.createElement('button'); delBtn.type='button'; delBtn.title='删除标签'; delBtn.textContent='×'; delBtn.onclick=(e)=>{ e.stopPropagation(); selectedCategories.delete(cat); renderCategoryOptions(); };
-          div.appendChild(delBtn);
-        }
-        wrap.appendChild(div);
-      });
-    }
-    function addCategoryFromInput(){ const inp = document.getElementById('newCategoryInput'); if(!inp) return; const v = inp.value.trim(); if(!v) return; selectedCategories.add(v); inp.value=''; renderCategoryOptions(); }
-    document.getElementById('addCategoryBtn').onclick=()=> addCategoryFromInput();
-    document.getElementById('newCategoryInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addCategoryFromInput(); } });
-    function getSelectedCategories(){ return Array.from(selectedCategories); }
-    function initMarkerColorPalette(){
-      const palette = document.getElementById('markerColorPalette'); if(!palette) return;
-      const presets = Object.keys(markerGradients);
-      palette.innerHTML='';
-      const none = document.createElement('div'); none.className='marker-color-swatch'; none.dataset.none='1'; none.title='自动'; none.tabIndex=0; none.textContent='A'; none.onclick=()=>{ selectedMarkerColor=''; document.getElementById('markerColor').value=''; updateMarkerSelection(); };
-      palette.appendChild(none);
-      presets.forEach(p=>{ const s=document.createElement('div'); s.className='marker-color-swatch'; s.style.background=markerGradients[p]; s.title=p; s.tabIndex=0; s.dataset.val=p; s.onclick=()=>{ selectedMarkerColor=p; document.getElementById('markerColor').value=p; updateMarkerSelection(); }; palette.appendChild(s); });
-      updateMarkerSelection();
-    }
-    function updateMarkerSelection(){ document.querySelectorAll('.marker-color-swatch').forEach(el=>{ if(el.dataset.none==='1'){ el.dataset.selected = selectedMarkerColor==='' ? '1':'0'; } else { el.dataset.selected = el.dataset.val===selectedMarkerColor ? '1':'0'; } }); }
-
-    // 添加地点
-    form.addEventListener('submit', e=>{
-      e.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const description = document.getElementById('description').value.trim();
-      const date = document.getElementById('date').value.trim();
-      const coordinates = document.getElementById('coordinates').value.trim();
-      const markerColor = document.getElementById('markerColor').value.trim();
-      const categories = getSelectedCategories();
-      const url = document.getElementById('url').value.trim();
-      const urlLabel = document.getElementById('urlLabel').value.trim();
-      const draftObj = { name, coordinates, description, date, url, urlLabel, photos:[...photosTemp], categories, markerColor };
-      const errs = collectErrors(draftObj);
-      showErrors(errs);
-      clearInvalidHighlights(); applyInvalidHighlights(draftObj);
-      if(errs.length){ return; }
-      if(editingIndex !== null){
-        locations[editingIndex] = draftObj;
-        editingIndex = null;
-        document.getElementById('submitBtn').textContent = '✚ 添加地点';
-        document.getElementById('cancelEditBtn').style.display = 'none';
-      } else {
-        locations.push(draftObj);
-      }
-      photosTemp=[]; renderPhotosTemp(); form.reset(); renderLocations(); persistDraft(); generateJson(); selectedMarkerColor=''; document.getElementById('markerColor').value=''; selectedCategories=new Set(); renderCategoryOptions(); updateMarkerSelection();
-      
-      // 滚动到最新添加的地点
-      setTimeout(() => {
-        const items = locationListEl.querySelectorAll('.location-item');
-        if(items.length > 0) {
-          const lastItem = items[items.length - 1];
-          lastItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }, 100);
-    });
-
-    document.getElementById('resetFormBtn').onclick=()=>{ form.reset(); photosTemp=[]; renderPhotosTemp(); };
-    document.getElementById('cancelEditBtn').onclick=()=>{ 
-      editingIndex = null; 
-      form.reset(); 
-      photosTemp=[]; 
-      renderPhotosTemp(); 
-      showErrors([]);
-      selectedMarkerColor=''; 
-      document.getElementById('markerColor').value=''; 
-      selectedCategories=new Set(); 
-      renderCategoryOptions(); 
-      updateMarkerSelection();
-      document.getElementById('submitBtn').textContent = '✚ 添加地点';
-      document.getElementById('cancelEditBtn').style.display = 'none';
-    };
-    document.getElementById('clearAllBtn').onclick=()=>{ if(confirm('确定清空所有地点?')){ locations=[]; renderLocations(); persistDraft(); jsonOutput.textContent=''; const wrap = document.getElementById('previewMapWrap'); const previewMapEl = document.getElementById('previewMap'); if(previewMapEl) previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点或导入 JSON 文件，然后点击"刷新预览"。</div>'; } };
-    document.getElementById('removeLastBtn').onclick=()=>{
-      // 删除最后一个并保持 UI 与数据同步
-      locations.pop();
-      renderLocations();
-      persistDraft();
-      generateJson();
-      // 删除后聚焦到新的最后一项（如果存在）
-      setTimeout(()=>{
-        const items = locationListEl.querySelectorAll('.location-item');
-        if(items.length > 0){
-          const last = items[items.length - 1];
-          last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }, 80);
-    };
-
-    function renderLocations(){
-      locationListEl.innerHTML='';
-      locations.forEach((loc,idx)=>{
-        const item = document.createElement('div'); 
-        item.className='location-item';
-        item.dataset.idx = idx;
-        
-        // 复选框
-        const checkbox = document.createElement('input');
-        checkbox.type='checkbox'; 
-        checkbox.className='loc-select item-checkbox';
-        item.appendChild(checkbox);
-        
-        // 标题
-        const h = document.createElement('h3'); 
-        h.textContent = `${idx+1}. ${loc.name}`; 
-        item.appendChild(h);
-        
-        // 元信息
-        const meta = document.createElement('div'); 
-        meta.className='item-meta';
-        meta.textContent = `${loc.date || '未指定日期'} · ${loc.coordinates}`; 
-        item.appendChild(meta);
-        
-        // 描述
-        if(loc.description){
-          const desc = document.createElement('div'); 
-          desc.className='item-desc';
-          desc.textContent = loc.description.slice(0,120) + (loc.description.length > 120 ? '...' : ''); 
-          item.appendChild(desc);
-        }
-        
-        // 分类标签
-        if(loc.categories && loc.categories.length){ 
-          const cWrap=document.createElement('div'); 
-          cWrap.style.marginTop='8px';
-          loc.categories.forEach(c=>{ 
-            const span=document.createElement('span'); 
-            span.className='tag'; 
-            span.textContent=c; 
-            cWrap.appendChild(span); 
-          }); 
-          item.appendChild(cWrap); 
-        }
-        
-        // 图片和链接
-        const extraInfo = document.createElement('div');
-        extraInfo.style.marginTop='6px';
-        extraInfo.style.fontSize='11px';
-        extraInfo.style.color='#64748b';
-        if(loc.photos && loc.photos.length){ 
-          const photoSpan = document.createElement('span');
-          photoSpan.textContent = `📸 ${loc.photos.length} 张图片`;
-          extraInfo.appendChild(photoSpan);
-        }
-        if(loc.url){ 
-          if(loc.photos && loc.photos.length) {
-            extraInfo.appendChild(document.createTextNode(' · '));
-          }
-          const u=document.createElement('a'); 
-          u.href=loc.url; 
-          u.target='_blank'; 
-          u.textContent= loc.urlLabel || '🔗 链接'; 
-          u.style.color='#6366f1';
-          u.style.textDecoration='none';
-          extraInfo.appendChild(u); 
-        }
-        if(loc.photos?.length || loc.url) item.appendChild(extraInfo);
-        
-        // 操作按钮组
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className='item-actions';
-        
-        const editBtn = document.createElement('button'); 
-        editBtn.type='button'; 
-        editBtn.textContent='编辑'; 
-        editBtn.className='secondary';
-        editBtn.onclick=()=>{
-          editingIndex = idx;
-          document.getElementById('name').value = loc.name;
-          document.getElementById('description').value = loc.description || '';
-          document.getElementById('date').value = loc.date && /\d{4}-\d{2}-\d{2}/.test(loc.date) ? loc.date : '';
-          document.getElementById('coordinates').value = loc.coordinates;
-          selectedCategories = new Set(loc.categories||[]); renderCategoryOptions();
-          selectedMarkerColor = loc.markerColor || ''; 
-          document.getElementById('markerColor').value = selectedMarkerColor; 
-          updateMarkerSelection();
-          document.getElementById('url').value = loc.url || '';
-          document.getElementById('urlLabel').value = loc.urlLabel || '';
-          photosTemp = [...(loc.photos||[])]; renderPhotosTemp();
-          showErrors([]);
-          document.getElementById('submitBtn').textContent = '✔ 保存修改';
-          document.getElementById('cancelEditBtn').style.display = 'inline-block';
-          window.scrollTo({ top:0, behavior:'smooth' });
-        };
-        
-        const delBtn = document.createElement('button'); 
-        delBtn.type='button'; 
-        delBtn.textContent='删除'; 
-        delBtn.className='danger';
-        delBtn.onclick=()=>{ 
-          locations.splice(idx,1); 
-          renderLocations(); 
-          persistDraft(); 
-          generateJson();
-        };
-        
-        actionsDiv.appendChild(editBtn);
-        actionsDiv.appendChild(delBtn);
-        item.appendChild(actionsDiv);
-        
-        // 上下移动按钮
-        const navDiv = document.createElement('div');
-        navDiv.className='item-nav';
-        
-        const upBtn = document.createElement('button'); 
-        upBtn.type='button'; 
-        upBtn.innerHTML='↑'; 
-        upBtn.className='secondary';
-        upBtn.title='上移';
-        upBtn.onclick=()=>{ 
-          if(idx>0){ 
-            const mv=locations.splice(idx,1)[0]; 
-            locations.splice(idx-1,0,mv); 
-            renderLocations(); 
-            persistDraft(); 
-            generateJson(); 
-          } 
-        };
-        
-        const downBtn = document.createElement('button'); 
-        downBtn.type='button'; 
-        downBtn.innerHTML='↓'; 
-        downBtn.className='secondary';
-        downBtn.title='下移';
-        downBtn.onclick=()=>{ 
-          if(idx < locations.length-1){ 
-            const mv=locations.splice(idx,1)[0]; 
-            locations.splice(idx+1,0,mv); 
-            renderLocations(); 
-            persistDraft(); 
-            generateJson(); 
-          } 
-        };
-        
-        navDiv.appendChild(upBtn);
-        navDiv.appendChild(downBtn);
-        item.appendChild(navDiv);
-        
-        locationListEl.appendChild(item);
-      });
-      enableDragForItems();
-    }
-
-    // 生成 JSON
-    function generateJson(){
-      let exportLocations = locations.map(l=> ({ ...l }));
-      if(sortByDate){
-        exportLocations.sort((a,b)=>{
-          const da = Date.parse(a.date||'');
-          const db = Date.parse(b.date||'');
-          if(isNaN(da) && isNaN(db)) return 0;
-          if(isNaN(da)) return 1;
-          if(isNaN(db)) return -1;
-          return db - da;
-        });
-      }
-      if(pruneEmpty){
-        exportLocations = exportLocations.map(obj=>{
-          const cleaned = { name: obj.name, coordinates: obj.coordinates };
-          ['description','date','url','urlLabel','photos','categories','markerColor'].forEach(k=>{
-            const v = obj[k];
-            if(v===undefined || v===null) return;
-            if(typeof v==='string' && v.trim()==='') return;
-            if(Array.isArray(v) && v.length===0) return;
-            cleaned[k]=v;
-          });
-          return cleaned;
-        });
-      }
-      const obj = { locations: exportLocations };
-      const text = JSON.stringify(obj, null, 2);
-      jsonOutput.textContent = text;
-    }
-    document.getElementById('generateBtn').onclick=()=>{ generateJson(); renderPreviewMap(); };
-    document.getElementById('copyBtn').onclick=()=>{
-      if(!jsonOutput.textContent){ alert('请先生成 JSON'); return; }
-      navigator.clipboard.writeText(jsonOutput.textContent).then(()=> alert('已复制到剪贴板')); };
-    document.getElementById('downloadBtn').onclick=()=>{
-      if(!jsonOutput.textContent){ alert('请先生成 JSON'); return; }
-      const blob = new Blob([jsonOutput.textContent], { type:'application/json' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'footprints.generated.json'; a.click(); URL.revokeObjectURL(a.href); };
-    document.getElementById('toggleSortDateBtn').onclick=()=>{ sortByDate = !sortByDate; document.getElementById('toggleSortDateBtn').textContent = sortByDate ? '关闭按日期排序' : '开启按日期排序'; generateJson(); };
-    document.getElementById('refreshPreviewBtn').onclick=()=>{ renderPreviewMap(); };
-    // 主题切换由 shared script 管理，按钮文本与 demo 保持一致
-    if(window.Theme) Theme.init({ btnId: 'toggleThemeBtn', previewSelector: '#previewMapWrap' });
-    // 批量删除按钮逻辑
-    const deleteSelectedBtn = document.createElement('button');
-    deleteSelectedBtn.type='button'; deleteSelectedBtn.className='danger'; deleteSelectedBtn.textContent='批量删除选中';
-    deleteSelectedBtn.onclick=()=>{
-      const selectedIdx = [];
-      locationListEl.querySelectorAll('.location-item').forEach((el,i)=>{ const cb = el.querySelector('.loc-select'); if(cb && cb.checked) selectedIdx.push(i); });
-      if(!selectedIdx.length) { alert('未选择任何地点'); return; }
-      if(!confirm('确定删除选中的 '+ selectedIdx.length +' 个地点?')) return;
-      // 从末尾开始删除避免索引偏移
-      selectedIdx.sort((a,b)=>b-a).forEach(idx=> locations.splice(idx,1));
-      renderLocations(); persistDraft(); generateJson();
-    };
-    // 将批量删除按钮包裹在一个带底部外边距的容器中，避免与上方控件紧邻
-    const deleteBtnWrap = document.createElement('div');
-    deleteBtnWrap.style.marginBottom = '18px';
-    deleteBtnWrap.appendChild(deleteSelectedBtn);
-    document.getElementById('locationList').insertAdjacentElement('beforebegin', deleteBtnWrap);
-
-    // 添加图片按钮
-    document.getElementById('addPhotoBtn').onclick=()=>{ addPhotoUrl(); };
-
-    // 导入文件
-    document.getElementById('importFile').addEventListener('change', e=>{
-      const file = e.target.files[0]; if(!file) return;
-      const reader = new FileReader(); reader.onload=()=>{
-        try { 
-          const data = JSON.parse(reader.result); 
-          if(Array.isArray(data.locations)){ 
-            data.locations.forEach(l=>{ if(l.name && l.coordinates){ locations.push(l); } }); 
-            // 如果启用导入自动排序
-            if(importAutoSort){
-              locations.sort((a,b)=>{
-                const da = Date.parse(a.date||'');
-                const db = Date.parse(b.date||'');
-                if(isNaN(da) && isNaN(db)) return 0;
-                if(isNaN(da)) return 1;
-                if(isNaN(db)) return -1;
-                return db - da;
-              });
-            }
-            renderLocations(); persistDraft(); generateJson(); alert('导入并追加完成' + (importAutoSort ? '（已按日期排序）':'')); 
-          } else { alert('JSON 中不含 locations 数组'); } 
-        } catch(err){ alert('解析失败: '+ err.message); }
-      }; reader.readAsText(file);
-    });
-    
-    // 保存导入自动排序偏好
-    document.getElementById('importAutoSort').addEventListener('change', e=>{
-      importAutoSort = e.target.checked;
-      lsSet('footprintmap_builder_importAutoSort', importAutoSort.toString());
-    });
-
-    // 初始渲染
-    renderLocations(); renderPhotosTemp();
-
-    // 地图初始化与点击拾取
-    const map = new AMap.Map('map',{ viewMode:'2D', zoom:4, center:[105,36] });
-    map.on('click', function(ev){ if(ev && ev.lnglat){ const { lng, lat } = ev.lnglat; document.getElementById('coordinates').value = lng.toFixed(6)+','+lat.toFixed(6); } });
-    // 地点搜索
-    let placeSearch = null;
-    AMap.plugin('AMap.PlaceSearch', ()=>{ 
-      placeSearch = new AMap.PlaceSearch({ 
-        pageSize: 10,
-        pageIndex: 1
-      }); 
-    });
-    document.getElementById('placeSearchBtn').onclick=()=> doPlaceSearch();
-    document.getElementById('placeSearchInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doPlaceSearch(); } });
-    function doPlaceSearch(){
-      const kw = document.getElementById('placeSearchInput').value.trim(); 
-      if(!kw) return;
-      if(!placeSearch){ 
-        alert('搜索服务尚未就绪，请稍后再试'); 
-        return; 
-      }
-      placeSearch.search(kw, (status, result)=>{
-        console.log('搜索状态:', status, '结果:', result);
-        if(status === 'complete' && result.poiList && result.poiList.pois && result.poiList.pois.length > 0){
-          const poi = result.poiList.pois[0];
-          console.log('找到地点:', poi);
-          if(poi.location){ 
-            const lng = poi.location.lng; 
-            const lat = poi.location.lat; 
-            map.setZoomAndCenter(14, [lng, lat]); 
-            document.getElementById('coordinates').value = lng.toFixed(6)+','+lat.toFixed(6);
-            // 在地图上添加临时标记
-            map.clearMap();
-            new AMap.Marker({
-              position: [lng, lat],
-              map: map
-            });
-            alert('已定位到：' + poi.name);
-          } else {
-            alert('找到地点但无坐标信息，请尝试其他关键词');
-          }
-        } else if(status === 'no_data') {
-          alert('未找到"' + kw + '"，请尝试更具体的关键词（如：杭州西湖风景区、北京天安门广场）'); 
-        } else if(status === 'error') {
-          alert('搜索出错，请检查网络或稍后重试');
+    // 现在由 `static/js/editor-state.js` 管理所有运行时 state（locations, photosTemp, editingIndex 等）。
+    // 这里仅在 DOM 加载完成后把一些 UI 控件与 EditorState 的初始状态同步（如导入偏好）。
+    document.addEventListener('DOMContentLoaded', ()=>{
+      try{
+        const importAutoSortEl = document.getElementById('importAutoSort');
+        if(!importAutoSortEl) return;
+        if(window.EditorState && typeof window.EditorState.getImportAutoSort === 'function'){
+          importAutoSortEl.checked = !!window.EditorState.getImportAutoSort();
+        } else if(window.EditorState && typeof window.EditorState.getState === 'function'){
+          const s = window.EditorState.getState(); importAutoSortEl.checked = !!s.importAutoSort;
         } else {
-          alert('未找到相关地点，请尝试更具体的关键词'); 
+          // 旧兼容：如果未加载 EditorState，尝试从 localStorage 恢复导入偏好
+          try{ const v = lsGet && lsGet('footprintmap_builder_importAutoSort','false'); importAutoSortEl.checked = (v === 'true'); }catch(e){}
         }
-      });
-    }
-
-    // 预览地图渲染（使用简化版标记）
-    // 预览区直接用 footprint-map 组件渲染
-    function renderPreviewMap(){
-      const wrap = document.getElementById('previewMapWrap');
-      const previewMapEl = document.getElementById('previewMap');
-      if(!previewMapEl) return;
-      if(!locations.length){ 
-        // 只在初始化时显示提示，不清空已有内容
-        if(!wrap._initialized) {
-          previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点或导入 JSON 文件，然后点击"刷新预览"。</div>'; 
-          wrap._initialized = true;
-        }
-        return; 
-      }
-      // 生成临时数据文件 Blob
-      let exportLocations = locations.map(l=> ({ ...l }));
-      if(sortByDate){
-        exportLocations.sort((a,b)=>{
-          const da = Date.parse(a.date||'');
-          const db = Date.parse(b.date||'');
-          if(isNaN(da) && isNaN(db)) return 0;
-          if(isNaN(da)) return 1;
-          if(isNaN(db)) return -1;
-          return db - da;
-        });
-      }
-      if(pruneEmpty){
-        exportLocations = exportLocations.map(obj=>{
-          const cleaned = { name: obj.name, coordinates: obj.coordinates };
-          ['description','date','url','urlLabel','photos','categories','markerColor'].forEach(k=>{
-            const v = obj[k];
-            if(v===undefined || v===null) return;
-            if(typeof v==='string' && v.trim()==='') return;
-            if(Array.isArray(v) && v.length===0) return;
-            cleaned[k]=v;
-          });
-          return cleaned;
-        });
-      }
-      const obj = { locations: exportLocations };
-      const blob = new Blob([JSON.stringify(obj)], { type:'application/json' });
-      const url = URL.createObjectURL(blob);
-      
-      // 释放旧 blob
-      if(wrap._lastBlobUrl && wrap._lastBlobUrl!==url){
-        URL.revokeObjectURL(wrap._lastBlobUrl);
-      }
-      wrap._lastBlobUrl = url;
-      
-      // 完全重建容器
-      wrap.innerHTML = `<div id="previewMap" class="footprint-map" style="height:400px;border-radius:8px;overflow:hidden;" data-amap-key="4727334ebc13608dbe9ba75266c3d41a" data-json="${url}"></div>`;
-      
-      // 等待 DOM 更新后手动初始化地图
-      setTimeout(() => {
-        const newEl = document.getElementById('previewMap');
-        if(newEl && window.FootprintMap && typeof window.FootprintMap.bootstrapMap === 'function'){
-          window.FootprintMap.bootstrapMap(newEl);
-        }
-      }, 100);
-    }
-    // 初始尝试预览
-    if(locations.length > 0) {
-      generateJson();
-      renderPreviewMap();
-    }
-
-    // 样式：为 invalid 类添加高亮（插入 style 动态确保覆盖）
-    const styleEl = document.createElement('style');
-    styleEl.textContent = '.invalid{border-color:#dc2626 !important; background:#fef2f2 !important;}' +
-      '.dragging{opacity:0.5;}' +
-      '@media(max-width:640px){' +
-        '#map{height:280px !important;}' +
-        '.footprint-map{height:320px !important;}' +
-        '.location-item{font-size:12px; padding:10px 12px; padding-left:28px; padding-bottom:44px;}' +
-        '.marker-color-palette{gap:6px;}' +
-        '.tags-options{gap:5px;}' +
-        '.controls{gap:6px;}' +
-        'button{padding:8px 12px; font-size:13px;}' +
-      '}';
-    document.head.appendChild(styleEl);
-    // 初始化分类与颜色控件
-    initMarkerColorPalette(); renderCategoryOptions();
+      }catch(e){ /* ignore */ }
+    });
   </script>
 </body>
 </html>
