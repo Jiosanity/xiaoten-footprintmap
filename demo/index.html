@@ -299,45 +299,83 @@
       <p style="color: #6b7280; margin-bottom: 20px;">仅需三步即可在你的网站中使用</p>
       
       <h3 style="margin-top: 30px; margin-bottom: 15px; color: #374151;">1️⃣ 引入文件</h3>
-      <div class="code-block">
-&lt;!-- 引入 CSS --&gt;
+      <pre class="code-block"><code>&lt;!-- 引入 CSS --&gt;
 &lt;link rel="stylesheet" href="css/footprintmap.css"&gt;
 
 &lt;!-- 地图容器 --&gt;
 &lt;div id="footprintMap" style="height: 600px;"&gt;&lt;/div&gt;
 
 &lt;!-- 引入高德地图 API --&gt;
-&lt;script src="https://webapi.amap.com/maps?v=2.0&key=你的APIKey"&gt;&lt;/script&gt;
+&lt;script src="https://webapi.amap.com/maps?v=2.0&amp;key=你的APIKey"&gt;&lt;/script&gt;
 
 &lt;!-- 引入足迹地图 JS --&gt;
 &lt;script src="js/footprintmap.js"&gt;&lt;/script&gt;
-      </div>
+</code></pre>
 
       <h3 style="margin-top: 30px; margin-bottom: 15px; color: #374151;">2️⃣ 初始化地图</h3>
-      <div class="code-block">
-&lt;script&gt;
+      <pre class="code-block"><code>&lt;script&gt;
   const footprintMap = new FootprintMap({
     container: 'footprintMap',
     dataUrl: 'data/footprints.json',
     amapKey: '你的高德地图APIKey'
   });
 &lt;/script&gt;
-      </div>
+</code></pre>
 
       <h3 style="margin-top: 30px; margin-bottom: 15px; color: #374151;">3️⃣ 准备数据</h3>
-      <div class="code-block">
-{
+      <pre class="code-block"><code>{
+
   "locations": [
     {
       "name": "北京",
       "coordinates": "116.4074,39.9042",
-      "description": "中国的首都",
+      "description": "中国的首都，也是我的家乡。",
+      "date": "2024-05-01",
+      "categories": ["2024", "旅行", "家乡"],
+      "markerColor": "sunset",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg"
+      ],
+      "url": "https://www.xiaoten.com/posts/2025/11/amap-powered-footprintmap-shortcode/",
+      "urlLabel": "相关博客文章"
+    },
+    {
+      "name": "上海",
+      "coordinates": "121.4737,31.2304",
+      "description": "中国的经济中心，东方明珠所在地。",
+      "date": "2024-06-15",
       "categories": ["2024", "旅行"],
-      "markerColor": "sunset"
+      "markerColor": "ocean",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg"
+      ]
+    },
+    {
+      "name": "广州",
+      "coordinates": "113.2644,23.1291",
+      "description": "岭南文化的代表城市，美食之都。",
+      "date": "2023-12-20",
+      "categories": ["2023", "美食", "旅行"],
+      "markerColor": "forest",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg"
+      ]
+    },
+    {
+      "name": "成都",
+      "coordinates": "104.0665,30.5728",
+      "description": "天府之国，熊猫的故乡。",
+      "date": "2023-10-05",
+      "categories": ["2023", "美食", "旅行"],
+      "markerColor": "violet",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg"
+      ]
     }
   ]
 }
-      </div>
+</code></pre>
     </div>
   </div>
 
