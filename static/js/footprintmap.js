@@ -169,8 +169,11 @@
     });
 
     map.plugin(['AMap.Scale', 'AMap.ToolBar'], () => {
-      map.addControl(new AMap.ToolBar({ position: { top: '20px', right: '20px' } }));
-      map.addControl(new AMap.Scale({ position: { bottom: '20px', right: '20px' } }));
+      const isMobile = window.matchMedia('(max-width: 640px)').matches;
+      const toolbarPos = isMobile ? { bottom: '20px', right: '20px' } : { top: '20px', right: '20px' };
+      const scalePos = isMobile ? { bottom: '20px', left: '20px' } : { bottom: '20px', right: '20px' };
+      map.addControl(new AMap.ToolBar({ position: toolbarPos }));
+      map.addControl(new AMap.Scale({ position: scalePos }));
     });
 
     const infoWindow = new AMap.InfoWindow({ anchor: 'bottom-center' });
