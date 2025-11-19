@@ -130,6 +130,9 @@
     }
     .demo-toolbar button:hover, .demo-toolbar a.tip:hover { transform: translateY(-1px); }
     .dark .demo-toolbar button, .dark .demo-toolbar a.tip { background: #111827; color: #e5e7eb; border-color: rgba(255,255,255,0.12); }
+    @media (max-width: 768px) {
+      .demo-toolbar { top: auto; bottom: 80px; }
+    }
     .api-tip { position: fixed; top: 60px; right: 16px; max-width: 320px; background: #fff; color: #374151; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 999; display: none; }
     .api-tip p { font-size: 13px; line-height: 1.6; }
     .api-tip code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; }
@@ -348,7 +351,7 @@
   </div>
 
   <!-- 引入足迹地图 JS -->
-  <script src="../static/js/footprintmap.js?v=20251119b"></script>
+  <script src="../static/js/footprintmap.js?v=20251119c"></script>
   
   <!-- 初始化地图 -->
   <script>
