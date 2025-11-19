@@ -1,0 +1,70 @@
+{
+  "locations": [
+    {
+      "name": "北京",
+      "coordinates": "116.4074,39.9042",
+      "description": "中国的首都，拥有丰富的历史文化遗产和现代化的都市风貌。",
+      "date": "2024-05-01",
+      "url": "",
+      "urlLabel": "",
+      "photos": [],
+      "categories": ["2024", "旅行", "城市"],
+      "markerColor": "sunset"
+    },
+    {
+      "name": "上海",
+      "coordinates": "121.4737,31.2304",
+      "description": "国际化大都市，东方明珠塔、外滩等标志性建筑令人印象深刻。",
+      "date": "2024-06-15",
+      "url": "",
+      "urlLabel": "",
+      "photos": [],
+      "categories": ["2024", "旅行", "城市"],
+      "markerColor": "ocean"
+    },
+    {
+      "name": "杭州",
+      "coordinates": "120.1551,30.2741",
+      "description": "人间天堂，西湖美景让人流连忘返。",
+      "date": "2024-07-20",
+      "url": "",
+      "urlLabel": "阅读杭州游记",
+      "photos": [],
+      "categories": ["2024", "旅行", "自然"],
+      "markerColor": "forest"
+    },
+    {
+      "name": "成都",
+      "coordinates": "104.0668,30.5728",
+      "description": "天府之国，美食之都，慢生活的典范城市。",
+      "date": "2024-08-10",
+      "url": "",
+      "urlLabel": "",
+      "photos": [],
+      "categories": ["2024", "旅行", "美食"],
+      "markerColor": "amber"
+    },
+    {
+      "name": "西安",
+      "coordinates": "108.9398,34.3416",
+      "description": "十三朝古都，兵马俑、大雁塔等历史遗迹见证着千年文明。",
+      "date": "2024-09-05",
+      "url": "",
+      "urlLabel": "",
+      "photos": [],
+      "categories": ["2024", "旅行", "历史"],
+      "markerColor": "violet"
+    },
+    {
+      "name": "深圳",
+      "coordinates": "114.0579,22.5431",
+      "description": "年轻活力的科技之城，改革开放的前沿阵地。",
+      "date": "2024-10-12",
+      "url": "",
+      "urlLabel": "",
+      "photos": [],
+      "categories": ["2024", "出差", "城市"],
+      "markerColor": "citrus"
+    }
+  ]
+}
