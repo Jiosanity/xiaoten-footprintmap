@@ -147,5 +147,132 @@
       "categories": ["2024", "海滨", "旅行"],
       "markerColor": "ocean"
     }
+    ,
+    {
+      "name": "苏州",
+      "coordinates": "120.5853,31.2989",
+      "description": "园林之城，古典园林与水乡风貌交织。",
+      "date": "2024-09-12",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg"
+      ],
+      "categories": ["2024", "文化", "旅行"],
+      "markerColor": "violet"
+    },
+    {
+      "name": "天津",
+      "coordinates": "117.2000,39.1333",
+      "description": "滨海都市，近海的开放港口城市。",
+      "date": "2024-08-30",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg"
+      ],
+      "categories": ["2024", "城市", "出差"],
+      "markerColor": "ocean"
+    },
+    {
+      "name": "长春",
+      "coordinates": "125.3235,43.8171",
+      "description": "东北地区的重要城市，四季分明。",
+      "date": "2024-07-05",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg"
+      ],
+      "categories": ["2024", "旅行"],
+      "markerColor": "citrus"
+    },
+    {
+      "name": "哈尔滨",
+      "coordinates": "126.6424,45.7560",
+      "description": "冰雪文化著称的北方城市，冬季风光独特。",
+      "date": "2024-12-28",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg"
+      ],
+      "categories": ["2024", "自然", "冬季"],
+      "markerColor": "amber"
+    },
+    {
+      "name": "重庆",
+      "coordinates": "106.5516,29.5626",
+      "description": "山城立体的城市地貌与火锅文化著称。",
+      "date": "2024-06-22",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg"
+      ],
+      "categories": ["2024", "美食", "旅行"],
+      "markerColor": "forest"
+    },
+    {
+      "name": "昆明",
+      "coordinates": "102.7123,25.0406",
+      "description": "春城四季如春，滇池与民族文化丰富。",
+      "date": "2024-05-18",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg"
+      ],
+      "categories": ["2024", "自然", "旅行"],
+      "markerColor": "amber"
+    },
+    {
+      "name": "拉萨",
+      "coordinates": "91.1322,29.6604",
+      "description": "高原圣城，布达拉宫与藏传文化的中心。",
+      "date": "2024-09-01",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg"
+      ],
+      "categories": ["2024", "文化", "高原"],
+      "markerColor": "violet"
+    },
+    {
+      "name": "乌鲁木齐",
+      "coordinates": "87.6168,43.8256",
+      "description": "新疆维吾尔自治区首府，丝路重镇。",
+      "date": "2024-10-20",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV95CkR.jpg"
+      ],
+      "categories": ["2024", "历史", "旅行"],
+      "markerColor": "citrus"
+    },
+    {
+      "name": "大连",
+      "coordinates": "121.6147,38.9140",
+      "description": "滨海城市，海滨与建筑风格独具魅力。",
+      "date": "2024-08-08",
+      "url": "",
+      "urlLabel": "",
+      "photos": [
+        "https://s21.ax1x.com/2025/06/01/pV94OpV.jpg",
+        "https://s21.ax1x.com/2025/06/01/pV95p79.jpg"
+      ],
+      "categories": ["2024", "海滨", "旅行"],
+      "markerColor": "ocean"
+    }
   ]
 }
