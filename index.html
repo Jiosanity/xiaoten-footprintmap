@@ -459,6 +459,7 @@
 
   <!-- 引入足迹地图 JS -->
   <script src="static/js/footprintmap.js?v=20251119c"></script>
+  <script src="static/js/theme.js"></script>
   
   <!-- 初始化地图 -->
   <script>
@@ -469,14 +470,10 @@
       if (el) el.setAttribute('data-amap-key', savedKey);
     }
 
-    // 主题切换与 API Key 提示
-    const toggleBtn = document.getElementById('toggleThemeBtn');
+    // 主题切换逻辑由 static/js/theme.js 提供，统一为图标按钮文本
+    Theme.init({ btnId: 'toggleThemeBtn', previewSelector: '#footprintMap' });
     const apiTipBtn = document.getElementById('apiTipBtn');
     const apiTipBox = document.getElementById('apiTipBox');
-
-    toggleBtn.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-    });
 
     apiTipBtn.addEventListener('click', (e) => {
       e.preventDefault();
