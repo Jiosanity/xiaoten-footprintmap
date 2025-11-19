@@ -66,7 +66,7 @@
       min-height:60px;
       box-sizing:border-box;
       padding-left:30px;
-      padding-right:100px;
+      padding-right:120px;
     }
     .location-item h3 {
       margin:0 0 5px;
@@ -110,6 +110,25 @@
       padding:5px 8px;
       font-size:11px;
       min-width:44px;
+      height:24px;
+      line-height:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .location-item .item-nav {
+      position:absolute;
+      top:50%;
+      right:56px;
+      transform:translateY(-50%);
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .location-item .item-nav button {
+      padding:3px 6px;
+      font-size:12px;
+      width:28px;
       height:24px;
       line-height:1;
       display:flex;
@@ -597,6 +616,44 @@
         actionsDiv.appendChild(delBtn);
         item.appendChild(actionsDiv);
         
+        // 上下移动按钮
+        const navDiv = document.createElement('div');
+        navDiv.className='item-nav';
+        
+        const upBtn = document.createElement('button'); 
+        upBtn.type='button'; 
+        upBtn.innerHTML='↑'; 
+        upBtn.className='secondary';
+        upBtn.title='上移';
+        upBtn.onclick=()=>{ 
+          if(idx>0){ 
+            const mv=locations.splice(idx,1)[0]; 
+            locations.splice(idx-1,0,mv); 
+            renderLocations(); 
+            persistDraft(); 
+            triggerAutoPreview(); 
+          } 
+        };
+        
+        const downBtn = document.createElement('button'); 
+        downBtn.type='button'; 
+        downBtn.innerHTML='↓'; 
+        downBtn.className='secondary';
+        downBtn.title='下移';
+        downBtn.onclick=()=>{ 
+          if(idx < locations.length-1){ 
+            const mv=locations.splice(idx,1)[0]; 
+            locations.splice(idx+1,0,mv); 
+            renderLocations(); 
+            persistDraft(); 
+            triggerAutoPreview(); 
+          } 
+        };
+        
+        navDiv.appendChild(upBtn);
+        navDiv.appendChild(downBtn);
+        item.appendChild(navDiv);
+        
         locationListEl.appendChild(item);
       });
       enableDragForItems();
@@ -737,7 +794,11 @@
       const previewMapEl = document.getElementById('previewMap');
       if(!previewMapEl) return;
       if(!locations.length){ 
-        previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;">暂无足迹数据，请添加地点或导入 JSON 文件后即可展示。</div>'; 
+        // 只在初始化时显示提示，不清空已有内容
+        if(!wrap._initialized) {
+          previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;">暂无足迹数据，请添加地点或导入 JSON 文件后即可展示。</div>'; 
+          wrap._initialized = true;
+        }
         return; 
       }
       // 生成临时数据文件 Blob
@@ -791,9 +852,16 @@
       }
       wrap._lastBlobUrl = url;
     }
-    function triggerAutoPreview(){ generateJson(); renderPreviewMap(); }
+    function triggerAutoPreview(){ 
+      if(locations.length > 0) {
+        generateJson(); 
+        renderPreviewMap(); 
+      }
+    }
     // 初始尝试预览
-    triggerAutoPreview();
+    if(locations.length > 0) {
+      triggerAutoPreview();
+    }
 
     // 样式：为 invalid 类添加高亮（插入 style 动态确保覆盖）
     const styleEl = document.createElement('style');
