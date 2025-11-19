@@ -286,35 +286,6 @@
     registerThemeSync(map);
   }
 
-  // 销毁指定容器上的地图实例并清理观察器/注册记录
-  function destroyMap(container){
-    try{
-      if(!container) return;
-      // 找到在 container 下的 canvas map 实例（AMap.Map）
-      // 我们在 registerThemeSync 中维护 registeredMaps, 但未映射到容器；尝试查找最近的 Map 实例
-      // 通过遍历 registeredMaps 并比较 map.getContainer()（若存在）来匹配
-      let found = null;
-      registeredMaps.forEach(m=>{
-        try{
-          if(!m) return;
-          const c = m.getContainer && m.getContainer();
-          if(c && (c === container || container.contains(c))){ found = m; }
-        }catch(e){}
-      });
-      if(found){
-        try{ if(found.off) found.off(); }catch(e){}
-        try{ if(found.clearMap) found.clearMap(); }catch(e){}
-        try{ if(found.destroy) found.destroy(); }
-        catch(e){ try{ /* best-effort */ }catch(_){} }
-        registeredMaps.delete(found);
-      }
-      // 如果没有剩余注册地图，断开主题观察器
-      if(registeredMaps.size === 0 && themeObserver){ themeObserver.disconnect(); themeObserver = null; }
-      // 清理容器内容
-      try{ container.innerHTML = ''; }catch(e){}
-    }catch(e){ /* ignore */ }
-  }
-
   function buildMarkerHtml(point) {
     const classes = ['footprint-marker'];
     if (point.markerPreset) classes.push(`footprint-marker--${point.markerPreset}`);
@@ -510,6 +481,4 @@
     init: init,
     bootstrapMap: bootstrapMap
   };
-  // 新增 destroy API（接受容器元素）
-  window.FootprintMap.destroy = destroyMap;
 })();
