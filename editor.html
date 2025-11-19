@@ -293,11 +293,14 @@
         <button type="button" class="secondary" id="togglePruneEmptyBtn" data-on="1">剔除空字段: 开</button>
       </div>
       <pre id="jsonOutput" aria-label="输出 JSON"></pre>
-      <h2 style="margin-top:24px;">🔍 实时预览</h2>
-      <div id="previewMapWrap">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:24px;">
+        <h2 style="margin:0;">🔍 实时预览</h2>
+        <button type="button" class="secondary" id="refreshPreviewBtn" style="font-size:13px; padding:7px 14px;">🔄 刷新预览</button>
+      </div>
+      <div id="previewMapWrap" style="margin-top:12px;">
         <div id="previewMap" class="footprint-map" style="width:100%;height:400px;" data-amap-key="4727334ebc13608dbe9ba75266c3d41a"></div>
       </div>
-      <p class="small">预览为正式 FootprintMap 组件（含聚类、筛选、主题切换等），导出的 JSON 可直接用于生产环境。</p>
+      <p class="small">预览为正式 FootprintMap 组件（含聚类、筛选、主题切换等），导出的 JSON 可直接用于生产环境。点击"刷新预览"更新地图。</p>
     </section>
   </main>
   <footer>
@@ -423,7 +426,7 @@
           if(isNaN(from)||isNaN(to)||from===to) return;
           const moved = locations.splice(from,1)[0];
           locations.splice(to,0,moved);
-          renderLocations(); persistDraft(); triggerAutoPreview();
+          renderLocations(); persistDraft(); generateJson();
         });
       });
     }
@@ -489,7 +492,7 @@
       } else {
         locations.push(draftObj);
       }
-      photosTemp=[]; renderPhotosTemp(); form.reset(); renderLocations(); persistDraft(); triggerAutoPreview(); selectedMarkerColor=''; document.getElementById('markerColor').value=''; selectedCategories=new Set(); renderCategoryOptions(); updateMarkerSelection();
+      photosTemp=[]; renderPhotosTemp(); form.reset(); renderLocations(); persistDraft(); generateJson(); selectedMarkerColor=''; document.getElementById('markerColor').value=''; selectedCategories=new Set(); renderCategoryOptions(); updateMarkerSelection();
       
       // 滚动到最新添加的地点
       setTimeout(() => {
@@ -517,7 +520,7 @@
       document.getElementById('cancelEditBtn').style.display = 'none';
     };
     document.getElementById('clearAllBtn').onclick=()=>{ if(confirm('确定清空所有地点?')){ locations=[]; renderLocations(); persistDraft(); jsonOutput.textContent=''; const wrap = document.getElementById('previewMapWrap'); const previewMapEl = document.getElementById('previewMap'); if(previewMapEl) previewMapEl.innerHTML='<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;">暂无足迹数据，请添加地点或导入 JSON 文件后即可展示。</div>'; } };
-    document.getElementById('removeLastBtn').onclick=()=>{ locations.pop(); renderLocations(); persistDraft(); triggerAutoPreview(); };
+    document.getElementById('removeLastBtn').onclick=()=>{ locations.pop(); renderLocations(); persistDraft(); generateJson(); };
 
     function renderLocations(){
       locationListEl.innerHTML='';
@@ -623,7 +626,7 @@
           locations.splice(idx,1); 
           renderLocations(); 
           persistDraft(); 
-          triggerAutoPreview();
+          generateJson();
         };
         
         actionsDiv.appendChild(editBtn);
@@ -645,7 +648,7 @@
             locations.splice(idx-1,0,mv); 
             renderLocations(); 
             persistDraft(); 
-            triggerAutoPreview(); 
+            generateJson(); 
           } 
         };
         
@@ -660,7 +663,7 @@
             locations.splice(idx+1,0,mv); 
             renderLocations(); 
             persistDraft(); 
-            triggerAutoPreview(); 
+            generateJson(); 
           } 
         };
         
@@ -711,8 +714,9 @@
       if(!jsonOutput.textContent){ alert('请先生成 JSON'); return; }
       const blob = new Blob([jsonOutput.textContent], { type:'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'footprints.generated.json'; a.click(); URL.revokeObjectURL(a.href); };
-    document.getElementById('toggleSortDateBtn').onclick=()=>{ sortByDate = !sortByDate; document.getElementById('toggleSortDateBtn').textContent = sortByDate ? '关闭按日期排序' : '开启按日期排序'; triggerAutoPreview(); };
-    document.getElementById('togglePruneEmptyBtn').onclick=()=>{ pruneEmpty = !pruneEmpty; document.getElementById('togglePruneEmptyBtn').textContent = '剔除空字段: ' + (pruneEmpty ? '开':'关'); triggerAutoPreview(); };
+    document.getElementById('toggleSortDateBtn').onclick=()=>{ sortByDate = !sortByDate; document.getElementById('toggleSortDateBtn').textContent = sortByDate ? '关闭按日期排序' : '开启按日期排序'; generateJson(); };
+    document.getElementById('togglePruneEmptyBtn').onclick=()=>{ pruneEmpty = !pruneEmpty; document.getElementById('togglePruneEmptyBtn').textContent = '剔除空字段: ' + (pruneEmpty ? '开':'关'); generateJson(); };
+    document.getElementById('refreshPreviewBtn').onclick=()=>{ renderPreviewMap(); };
     // 批量删除按钮逻辑
     const deleteSelectedBtn = document.createElement('button');
     deleteSelectedBtn.type='button'; deleteSelectedBtn.className='danger'; deleteSelectedBtn.textContent='批量删除选中';
@@ -723,7 +727,7 @@
       if(!confirm('确定删除选中的 '+ selectedIdx.length +' 个地点?')) return;
       // 从末尾开始删除避免索引偏移
       selectedIdx.sort((a,b)=>b-a).forEach(idx=> locations.splice(idx,1));
-      renderLocations(); persistDraft(); triggerAutoPreview();
+      renderLocations(); persistDraft(); generateJson();
     };
     document.getElementById('locationList').insertAdjacentElement('beforebegin', deleteSelectedBtn);
 
@@ -749,7 +753,7 @@
                 return db - da;
               });
             }
-            renderLocations(); persistDraft(); triggerAutoPreview(); alert('导入并追加完成' + (importAutoSort ? '（已按日期排序）':'')); 
+            renderLocations(); persistDraft(); generateJson(); alert('导入并追加完成' + (importAutoSort ? '（已按日期排序）':'')); 
           } else { alert('JSON 中不含 locations 数组'); } 
         } catch(err){ alert('解析失败: '+ err.message); }
       }; reader.readAsText(file);
@@ -874,13 +878,10 @@
         }
       }, 100);
     }
-    function triggerAutoPreview(){ 
-      generateJson(); 
-      renderPreviewMap(); 
-    }
     // 初始尝试预览
     if(locations.length > 0) {
-      triggerAutoPreview();
+      generateJson();
+      renderPreviewMap();
     }
 
     // 样式：为 invalid 类添加高亮（插入 style 动态确保覆盖）
