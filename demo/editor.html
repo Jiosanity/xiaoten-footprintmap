@@ -134,6 +134,12 @@
       <div class="import-block" style="margin-top:14px;">
         <label style="font-weight:600; font-size:12px;">导入已有 JSON 文件</label>
         <input type="file" id="importFile" accept="application/json" />
+        <div style="margin-top:6px;">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400;">
+            <input type="checkbox" id="importAutoSort" />
+            <span style="font-size:11px;">导入后自动按日期排序</span>
+          </label>
+        </div>
         <p class="small">会尝试读取其中的 locations 并追加。</p>
       </div>
       <h2 style="margin-top:24px;">🧾 导出 JSON</h2>
@@ -147,8 +153,8 @@
       </div>
       <pre id="jsonOutput" aria-label="输出 JSON"></pre>
       <h2 style="margin-top:24px;">🔍 实时预览</h2>
-      <div id="previewMap" style="width:100%;height:300px;border:1px solid #cbd5e1; border-radius:8px; background:#f1f5f9; position:relative; overflow:hidden;"></div>
-      <p class="small">预览使用简化版渲染（标记、聚焦），最终效果以正式 FootprintMap 为准。</p>
+      <div class="footprint-map" id="previewMap" data-amap-key="4727334ebc13608dbe9ba75266c3d41a" style="width:100%;height:400px;"></div>
+      <p class="small">预览使用正式 FootprintMap 组件（含聚类、筛选），与实际效果一致。</p>
     </section>
   </main>
   <footer>
@@ -172,9 +178,14 @@
     let previewMapInstance = null;
     let sortByDate = false;
     let pruneEmpty = true;
+    let importAutoSort = false;
     const defaultCategories = ['常驻','旅行','游记'];
     let selectedCategories = new Set();
     let selectedMarkerColor = '';
+    
+    // 恢复导入自动排序偏好
+    try { const pref = localStorage.getItem('footprintmap_builder_importAutoSort'); if(pref) importAutoSort = pref==='true'; } catch(e){}
+    if(document.getElementById('importAutoSort')) document.getElementById('importAutoSort').checked = importAutoSort;
     const markerGradients = {
       sunset: 'linear-gradient(135deg, #ffb347, #ff6f61)',
       ocean: 'linear-gradient(135deg, #06beb6, #48b1bf)',
@@ -447,8 +458,31 @@
     document.getElementById('importFile').addEventListener('change', e=>{
       const file = e.target.files[0]; if(!file) return;
       const reader = new FileReader(); reader.onload=()=>{
-        try { const data = JSON.parse(reader.result); if(Array.isArray(data.locations)){ data.locations.forEach(l=>{ if(l.name && l.coordinates){ locations.push(l); } }); renderLocations(); persistDraft(); alert('导入并追加完成'); } else { alert('JSON 中不含 locations 数组'); } } catch(err){ alert('解析失败: '+ err.message); }
+        try { 
+          const data = JSON.parse(reader.result); 
+          if(Array.isArray(data.locations)){ 
+            data.locations.forEach(l=>{ if(l.name && l.coordinates){ locations.push(l); } }); 
+            // 如果启用导入自动排序
+            if(importAutoSort){
+              locations.sort((a,b)=>{
+                const da = Date.parse(a.date||'');
+                const db = Date.parse(b.date||'');
+                if(isNaN(da) && isNaN(db)) return 0;
+                if(isNaN(da)) return 1;
+                if(isNaN(db)) return -1;
+                return db - da;
+              });
+            }
+            renderLocations(); persistDraft(); triggerAutoPreview(); alert('导入并追加完成' + (importAutoSort ? '（已按日期排序）':'')); 
+          } else { alert('JSON 中不含 locations 数组'); } 
+        } catch(err){ alert('解析失败: '+ err.message); }
       }; reader.readAsText(file);
+    });
+    
+    // 保存导入自动排序偏好
+    document.getElementById('importAutoSort').addEventListener('change', e=>{
+      importAutoSort = e.target.checked;
+      localStorage.setItem('footprintmap_builder_importAutoSort', importAutoSort.toString());
     });
 
     // 初始渲染
@@ -473,35 +507,63 @@
       });
     }
 
-    // 预览地图渲染
-    function renderPreviewMap(){
+    // 预览地图渲染（使用正式 FootprintMap 组件）
+    async function renderPreviewMap(){
       if(!previewMapEl) return;
-      if(!locations.length){ previewMapEl.innerHTML='<div style="padding:12px;font-size:12px;color:#64748b;">暂无地点，添加后显示预览。</div>'; return; }
+      if(!locations.length){ 
+        previewMapEl.innerHTML='<div style="padding:12px;font-size:12px;color:#64748b;">暂无地点，添加后显示预览。</div>'; 
+        return; 
+      }
       try {
-        if(!previewMapInstance){
-          previewMapInstance = new AMap.Map(previewMapEl,{ viewMode:'2D', zoom:4, center:[105,36] });
-        }
-        // 清理旧覆盖物
-        const old = previewMapInstance.getAllOverlays('marker') || [];
-        old.forEach(m=> previewMapInstance.remove(m));
-        let bounds = [];
-        locations.forEach((loc,i)=>{
-          const coord = validateCoordinates(loc.coordinates);
-          if(!coord) return;
-          const gradient = markerGradients[loc.markerColor] || markerGradients.sunset;
-          const marker = new AMap.Marker({
-            position:[coord.lng, coord.lat],
-            content:`<span style=\"display:inline-block;width:20px;height:20px;border-radius:50%;background:${gradient};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer\" title=\"${loc.name}\"></span>`,
-            offset:new AMap.Pixel(-10,-10)
+        // 准备导出数据（应用排序和剔除）
+        let exportLocations = locations.map(l=> ({ ...l }));
+        if(sortByDate){
+          exportLocations.sort((a,b)=>{
+            const da = Date.parse(a.date||'');
+            const db = Date.parse(b.date||'');
+            if(isNaN(da) && isNaN(db)) return 0;
+            if(isNaN(da)) return 1;
+            if(isNaN(db)) return -1;
+            return db - da;
           });
-            marker.on('click',()=>{
-              const info = new AMap.InfoWindow({ anchor:'bottom-center', content:`<div style='font-size:12px;max-width:220px;'><strong>${loc.name}</strong><br>${loc.date||''}<br>${(loc.description||'').slice(0,80)}${loc.description&&loc.description.length>80?'...':''}</div>` });
-              info.open(previewMapInstance,[coord.lng, coord.lat]);
+        }
+        if(pruneEmpty){
+          exportLocations = exportLocations.map(obj=>{
+            const cleaned = { name: obj.name, coordinates: obj.coordinates };
+            ['description','date','url','urlLabel','photos','categories','markerColor'].forEach(k=>{
+              const v = obj[k];
+              if(v===undefined || v===null) return;
+              if(typeof v==='string' && v.trim()==='') return;
+              if(Array.isArray(v) && v.length===0) return;
+              cleaned[k]=v;
             });
-          previewMapInstance.add(marker);
-          bounds.push([coord.lng, coord.lat]);
-        });
-        if(bounds.length){ previewMapInstance.setFitView(); }
+            return cleaned;
+          });
+        }
+        
+        // 创建临时数据 Blob URL
+        const dataBlob = new Blob([JSON.stringify({ locations: exportLocations })], { type: 'application/json' });
+        const dataUrl = URL.createObjectURL(dataBlob);
+        
+        // 重置容器并重新初始化 FootprintMap
+        previewMapEl.innerHTML = '';
+        previewMapEl.className = 'footprint-map';
+        previewMapEl.dataset.json = dataUrl;
+        previewMapEl.dataset.amapKey = '4727334ebc13608dbe9ba75266c3d41a';
+        previewMapEl.style.width = '100%';
+        previewMapEl.style.height = '400px';
+        
+        // 动态加载并重新初始化 FootprintMap（如果已加载则直接调用 bootstrap）
+        if(window.FootprintMapCore && typeof window.FootprintMapCore.bootstrap === 'function'){
+          await window.FootprintMapCore.bootstrap(previewMapEl);
+        } else {
+          // 如果 FootprintMap 脚本未暴露全局 API，则模拟初始化触发
+          const initEvent = new Event('DOMContentLoaded');
+          document.dispatchEvent(initEvent);
+        }
+        
+        // 清理临时 URL（延迟以确保加载完成）
+        setTimeout(() => URL.revokeObjectURL(dataUrl), 5000);
       } catch(err){
         previewMapEl.innerHTML = '<div style="padding:12px;color:#dc2626;font-size:12px;">预览渲染失败: '+ err.message +'</div>';
       }
