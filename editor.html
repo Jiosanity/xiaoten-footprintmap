@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>足迹数据构建器 - XiaoTen FootprintMap</title>
-  <link rel="stylesheet" href="../static/css/footprintmap.css" />
+  <link rel="stylesheet" href="static/css/footprintmap.css" />
   <style>
     body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; background:#f5f7fa; margin:0; padding:0; }
     header { padding:20px 24px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; }
@@ -58,8 +58,16 @@
     .photos-list .photo-item button { background:none; color:#dc2626; border:none; padding:0 4px; font-size:14px; cursor:pointer; line-height:1; }
     .photos-list .photo-item button:hover { color:#991b1b; }
     .location-list { max-height:320px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; padding:10px; background:#fff; margin-bottom:12px; }
-    .location-item { border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; padding-left:32px; padding-bottom:48px; margin-bottom:10px; background:#f8fafc; font-size:13px; position:relative; }
-    .location-item h3 { margin:0 0 6px; font-size:14px; color:#334155; font-weight:600; }
+    .location-item { border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px; padding-left:42px; padding-top:42px; padding-bottom:52px; margin-bottom:10px; background:#f8fafc; font-size:13px; position:relative; transition:all 0.2s; }
+    .location-item:hover { background:#f1f5f9; border-color:#cbd5e1; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+    .location-item h3 { margin:0 0 8px; font-size:15px; color:#1f2937; font-weight:600; line-height:1.4; }
+    .location-item .item-checkbox { position:absolute; left:14px; top:14px; width:18px; height:18px; cursor:pointer; }
+    .location-item .item-meta { font-size:12px; color:#64748b; margin-bottom:8px; line-height:1.6; }
+    .location-item .item-desc { color:#475569; line-height:1.5; margin-bottom:8px; }
+    .location-item .item-actions { position:absolute; top:10px; right:10px; display:flex; gap:6px; }
+    .location-item .item-actions button { padding:6px 10px; font-size:12px; min-width:50px; }
+    .location-item .item-nav { position:absolute; bottom:10px; right:10px; display:flex; gap:6px; }
+    .location-item .item-nav button { padding:6px 8px; font-size:13px; width:36px; height:32px; display:flex; align-items:center; justify-content:center; }
     .tag { display:inline-block; background:#6366f1; color:#fff; padding:3px 8px; font-size:11px; border-radius:4px; margin-right:4px; margin-top:4px; }
     .controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
     pre#jsonOutput { background:#0f172a; color:#e2e8f0; padding:16px; border-radius:8px; font-size:12px; overflow:auto; max-height:340px; line-height:1.6; margin-top:12px; }
@@ -119,6 +127,11 @@
   <header>
     <h1>足迹数据构建器</h1>
     <p>可视化录入地点信息，生成符合 FootprintMap 规范的 JSON 数据。</p>
+    <div style="margin-top:12px;">
+      <a href="demo.html" style="color:#fff;text-decoration:none;opacity:0.9;font-size:13px;border:1px solid rgba(255,255,255,0.3);padding:6px 12px;border-radius:6px;display:inline-block;transition:all 0.2s;"
+         onmouseover="this.style.opacity='1';this.style.background='rgba(255,255,255,0.15)'"
+         onmouseout="this.style.opacity='0.9';this.style.background='transparent'">← 返回演示页</a>
+    </div>
   </header>
   <main>
     <section class="panel" style="flex:1 1 480px;">
@@ -228,7 +241,7 @@
   </footer>
 
   <script src="https://webapi.amap.com/maps?v=2.0&key=4727334ebc13608dbe9ba75266c3d41a"></script>
-  <script defer src="../static/js/footprintmap.js"></script>
+  <script defer src="static/js/footprintmap.js"></script>
   <script>
     const form = document.getElementById('locationForm');
     const photosListEl = document.getElementById('photosList');
@@ -417,43 +430,151 @@
     function renderLocations(){
       locationListEl.innerHTML='';
       locations.forEach((loc,idx)=>{
-        const item = document.createElement('div'); item.className='location-item';
+        const item = document.createElement('div'); 
+        item.className='location-item';
         item.dataset.idx = idx;
-        const h = document.createElement('h3'); h.textContent = `${idx+1}. ${loc.name}`; item.appendChild(h);
-        const meta = document.createElement('div'); meta.textContent = `${loc.date} · ${loc.coordinates}`; meta.style.fontSize='11px'; meta.style.color='#64748b'; item.appendChild(meta);
-        const desc = document.createElement('div'); desc.textContent = loc.description.slice(0,120); desc.style.margin='6px 0'; item.appendChild(desc);
-        if(loc.categories && loc.categories.length){ const cWrap=document.createElement('div'); loc.categories.forEach(c=>{ const span=document.createElement('span'); span.className='tag'; span.textContent=c; cWrap.appendChild(span); }); item.appendChild(cWrap); }
-        if(loc.photos && loc.photos.length){ const p=document.createElement('div'); p.style.fontSize='11px'; p.style.marginTop='4px'; p.textContent = `📸 ${loc.photos.length} 张图片`; item.appendChild(p); }
-        if(loc.url){ const u=document.createElement('a'); u.href=loc.url; u.target='_blank'; u.textContent= loc.urlLabel || '链接'; u.style.display='inline-block'; u.style.fontSize='11px'; u.style.marginTop='4px'; item.appendChild(u); }
-        const delBtn = document.createElement('button'); delBtn.type='button'; delBtn.textContent='删除'; delBtn.className='danger'; delBtn.style.position='absolute'; delBtn.style.top='8px'; delBtn.style.right='8px';
-        delBtn.onclick=()=>{ locations.splice(idx,1); renderLocations(); persistDraft(); };
-        const editBtn = document.createElement('button'); editBtn.type='button'; editBtn.textContent='编辑'; editBtn.className='secondary'; editBtn.style.position='absolute'; editBtn.style.top='8px'; editBtn.style.right='70px';
+        
+        // 复选框
+        const checkbox = document.createElement('input');
+        checkbox.type='checkbox'; 
+        checkbox.className='loc-select item-checkbox';
+        item.appendChild(checkbox);
+        
+        // 标题
+        const h = document.createElement('h3'); 
+        h.textContent = `${idx+1}. ${loc.name}`; 
+        item.appendChild(h);
+        
+        // 元信息
+        const meta = document.createElement('div'); 
+        meta.className='item-meta';
+        meta.textContent = `${loc.date || '未指定日期'} · ${loc.coordinates}`; 
+        item.appendChild(meta);
+        
+        // 描述
+        if(loc.description){
+          const desc = document.createElement('div'); 
+          desc.className='item-desc';
+          desc.textContent = loc.description.slice(0,120) + (loc.description.length > 120 ? '...' : ''); 
+          item.appendChild(desc);
+        }
+        
+        // 分类标签
+        if(loc.categories && loc.categories.length){ 
+          const cWrap=document.createElement('div'); 
+          cWrap.style.marginTop='8px';
+          loc.categories.forEach(c=>{ 
+            const span=document.createElement('span'); 
+            span.className='tag'; 
+            span.textContent=c; 
+            cWrap.appendChild(span); 
+          }); 
+          item.appendChild(cWrap); 
+        }
+        
+        // 图片和链接
+        const extraInfo = document.createElement('div');
+        extraInfo.style.marginTop='6px';
+        extraInfo.style.fontSize='11px';
+        extraInfo.style.color='#64748b';
+        if(loc.photos && loc.photos.length){ 
+          const photoSpan = document.createElement('span');
+          photoSpan.textContent = `📸 ${loc.photos.length} 张图片`;
+          extraInfo.appendChild(photoSpan);
+        }
+        if(loc.url){ 
+          if(loc.photos && loc.photos.length) {
+            extraInfo.appendChild(document.createTextNode(' · '));
+          }
+          const u=document.createElement('a'); 
+          u.href=loc.url; 
+          u.target='_blank'; 
+          u.textContent= loc.urlLabel || '🔗 链接'; 
+          u.style.color='#6366f1';
+          u.style.textDecoration='none';
+          extraInfo.appendChild(u); 
+        }
+        if(loc.photos?.length || loc.url) item.appendChild(extraInfo);
+        
+        // 操作按钮组
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className='item-actions';
+        
+        const editBtn = document.createElement('button'); 
+        editBtn.type='button'; 
+        editBtn.textContent='编辑'; 
+        editBtn.className='secondary';
         editBtn.onclick=()=>{
           editingIndex = idx;
           document.getElementById('name').value = loc.name;
-          document.getElementById('description').value = loc.description;
+          document.getElementById('description').value = loc.description || '';
           document.getElementById('date').value = loc.date && /\d{4}-\d{2}-\d{2}/.test(loc.date) ? loc.date : '';
           document.getElementById('coordinates').value = loc.coordinates;
           selectedCategories = new Set(loc.categories||[]); renderCategoryOptions();
-          selectedMarkerColor = loc.markerColor || ''; document.getElementById('markerColor').value = selectedMarkerColor; updateMarkerSelection();
+          selectedMarkerColor = loc.markerColor || ''; 
+          document.getElementById('markerColor').value = selectedMarkerColor; 
+          updateMarkerSelection();
           document.getElementById('url').value = loc.url || '';
           document.getElementById('urlLabel').value = loc.urlLabel || '';
           photosTemp = [...(loc.photos||[])]; renderPhotosTemp();
           showErrors([]);
           window.scrollTo({ top:0, behavior:'smooth' });
         };
-        // 复选框用于批量删除
-        const checkbox = document.createElement('input');
-        checkbox.type='checkbox'; checkbox.className='loc-select'; checkbox.style.position='absolute'; checkbox.style.left='8px'; checkbox.style.top='10px';
-        item.appendChild(checkbox);
-        // 上下移动按钮（移动端降级）
-        const upBtn = document.createElement('button'); upBtn.type='button'; upBtn.textContent='↑'; upBtn.className='secondary'; upBtn.style.position='absolute'; upBtn.style.bottom='8px'; upBtn.style.right='70px'; upBtn.style.width='40px'; upBtn.style.padding='4px 0';
-        upBtn.onclick=()=>{ if(idx>0){ const mv=locations.splice(idx,1)[0]; locations.splice(idx-1,0,mv); renderLocations(); persistDraft(); triggerAutoPreview(); } };
-        const downBtn = document.createElement('button'); downBtn.type='button'; downBtn.textContent='↓'; downBtn.className='secondary'; downBtn.style.position='absolute'; downBtn.style.bottom='8px'; downBtn.style.right='8px'; downBtn.style.width='40px'; downBtn.style.padding='4px 0';
-        downBtn.onclick=()=>{ if(idx < locations.length-1){ const mv=locations.splice(idx,1)[0]; locations.splice(idx+1,0,mv); renderLocations(); persistDraft(); triggerAutoPreview(); } };
-        item.appendChild(upBtn); item.appendChild(downBtn);
-        item.appendChild(editBtn);
-        item.appendChild(delBtn); locationListEl.appendChild(item);
+        
+        const delBtn = document.createElement('button'); 
+        delBtn.type='button'; 
+        delBtn.textContent='删除'; 
+        delBtn.className='danger';
+        delBtn.onclick=()=>{ 
+          locations.splice(idx,1); 
+          renderLocations(); 
+          persistDraft(); 
+          triggerAutoPreview();
+        };
+        
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(delBtn);
+        item.appendChild(actionsDiv);
+        
+        // 导航按钮组
+        const navDiv = document.createElement('div');
+        navDiv.className='item-nav';
+        
+        const upBtn = document.createElement('button'); 
+        upBtn.type='button'; 
+        upBtn.innerHTML='↑'; 
+        upBtn.className='secondary';
+        upBtn.title='上移';
+        upBtn.onclick=()=>{ 
+          if(idx>0){ 
+            const mv=locations.splice(idx,1)[0]; 
+            locations.splice(idx-1,0,mv); 
+            renderLocations(); 
+            persistDraft(); 
+            triggerAutoPreview(); 
+          } 
+        };
+        
+        const downBtn = document.createElement('button'); 
+        downBtn.type='button'; 
+        downBtn.innerHTML='↓'; 
+        downBtn.className='secondary';
+        downBtn.title='下移';
+        downBtn.onclick=()=>{ 
+          if(idx < locations.length-1){ 
+            const mv=locations.splice(idx,1)[0]; 
+            locations.splice(idx+1,0,mv); 
+            renderLocations(); 
+            persistDraft(); 
+            triggerAutoPreview(); 
+          } 
+        };
+        
+        navDiv.appendChild(upBtn);
+        navDiv.appendChild(downBtn);
+        item.appendChild(navDiv);
+        
+        locationListEl.appendChild(item);
       });
       enableDragForItems();
     }
