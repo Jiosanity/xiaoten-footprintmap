@@ -154,6 +154,13 @@
     .import-block { border:1px dashed #94a3b8; padding:12px; border-radius:8px; background:#f8fafc; }
     .import-block input[type=file] { padding:6px 8px; font-size:13px; }
     .small { font-size:11px; color:#64748b; margin-top:6px; line-height:1.4; }
+    /* Footer 美化 */
+    footer { text-align:center; padding:18px 20px; font-size:13px; color:#64748b; display:flex; flex-direction:column; gap:6px; align-items:center; }
+    footer a { color:#6366f1; text-decoration:none; border-bottom:1px dashed transparent; padding-bottom:2px; }
+    footer a:hover { border-bottom-color: rgba(99,102,241,0.25); }
+    /* 日期行在窄屏下保持一行对齐，并调整高度 */
+    .date-row { display:flex; align-items:center; gap:8px; }
+    .date-row .date-actions { width:86px; display:flex; align-items:center; }
     .marker-color-palette { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
     .marker-color-swatch { 
       width:34px; 
@@ -190,11 +197,13 @@
       .marker-color-swatch{ width:28px; height:28px; border-width:2px; } 
       .panel { padding:16px 18px; }
       main { padding:16px; }
+      /* 大多数 inline 区域可换行，但 .date-row 我们保持为一行 */
       .inline { flex-direction:column; gap:10px; }
+      .date-row { flex-direction:row; }
       input[type=text], input[type=date], textarea, select, button { font-size:16px; }
       /* Mobile adjustments: keep consistent heights and smaller location list */
-      input[type=date] { height:44px; }
-      #clearDateBtn { height:44px; }
+      input[type=date] { height:40px; padding:8px 10px; }
+      #clearDateBtn { height:40px; padding:8px 10px; }
       .location-list { height:420px; max-height:420px; min-height:420px; }
       /* Ensure panels occupy full width on small screens */
       .panel { width:100%; }
@@ -239,12 +248,12 @@
         </div>
         <div class="group">
           <label>日期（可选，YYYY-MM-DD）</label>
-          <div class="inline date-row" style="align-items:center; gap:8px;">
+          <div class="inline date-row">
             <div style="flex:1; min-width:0;">
               <input type="date" id="date" />
             </div>
-            <div style="width:86px; display:flex; align-items:center;">
-              <button type="button" class="secondary" id="clearDateBtn" style="width:100%; height:42px; box-sizing:border-box;">清空日期</button>
+            <div class="date-actions">
+              <button type="button" class="secondary" id="clearDateBtn" style="width:100%; box-sizing:border-box;">清空日期</button>
             </div>
           </div>
         </div>
@@ -868,8 +877,10 @@
         const importSampleBtn2 = document.createElement('button');
         importSampleBtn2.type = 'button';
         importSampleBtn2.className = 'secondary';
-        importSampleBtn2.style.marginLeft = '8px';
-        // 使用绿色背景，避免蓝/白/红
+        // 不使用单个按钮的 left margin（会在换行时导致第二行缩进）
+        // 改为确保父容器使用 gap 与允许换行，从而在换行时各行左对齐
+        try{ if(sortBtn.parentNode){ sortBtn.parentNode.style.display = 'flex'; sortBtn.parentNode.style.gap = '8px'; sortBtn.parentNode.style.flexWrap = 'wrap'; } }catch(e){}
+        // 使用绿色背景区分
         importSampleBtn2.style.background = '#10b981';
         importSampleBtn2.style.borderColor = '#10b981';
         importSampleBtn2.style.color = '#fff';
