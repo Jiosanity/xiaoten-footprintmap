@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mapbox Adapter Example</title>
+  <link rel="stylesheet" href="./footprintmap-mapbox.css">
+  <style>html,body,#map{height:100%;margin:0;padding:0}body{font-family:system-ui,Segoe UI,Helvetica,Arial}</style>
+</head>
+<body>
+
+<div id="map" style="height:100vh"></div>
+
+<!-- adapter will load Mapbox GL JS/CSS dynamically -->
+<script src="./mapbox-adapter.js"></script>
+<!-- token example: copy to local_mapbox_token.js and fill your token to override -->
+<script src="./local_mapbox_token.example.js"></script>
+
+<script>
+  (async function(){
+    const token = window.__MAPBOX_TOKEN_OVERRIDE || 'YOUR_PUBLIC_MAPBOX_TOKEN_HERE';
+    await window.loadMapboxAdapter();
+
+    const container = document.getElementById('map');
+
+    // sample locations array (format used by the adapter)
+    const locations = [
+      {
+        name: '示例位置 — 北京故宫',
+        lng: 116.397, lat: 39.908,
+        date: '2020-01-01',
+        categories: ['旅行','文化'],
+        description: '这是一个示例描述。',
+        photos: ['https://placekitten.com/800/450'],
+        url: 'https://zh.wikipedia.org/wiki/%E5%86%9C%E5%AE%AB',
+        urlLabel: '更多信息',
+        markerPreset: 'sunset'
+      }
+    ];
+
+    window.renderMapWithMapbox(container, locations, token);
+  })();
+</script>
+
+</body>
+</html>

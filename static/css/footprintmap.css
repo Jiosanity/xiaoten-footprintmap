@@ -524,3 +524,62 @@
 .dark .amap-scale-line {
     border-color: rgba(255, 255, 255, 0.6) !important;
 }
+
+/* Mapbox popup visual overrides: remove Mapbox default shadow/tip and prevent horizontal scroll */
+.mapboxgl-popup-content {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+.mapboxgl-popup-tip {
+    display: none !important;
+}
+.amap-info-content {
+    padding: 0 !important;
+    background: transparent !important;
+}
+.amap-info-content .footprint-popup {
+    box-shadow: none !important;
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 100%;
+    box-sizing: border-box;
+    background: rgba(255,255,255,.96);
+    padding: 10px 12px;
+}
+.dark .amap-info-content .footprint-popup {
+    background: rgba(33,35,40,.92);
+}
+.footprint-popup {
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+.footprint-popup__track {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Restore a lightweight tip arrow styled like AMap's sharp pointer */
+.mapboxgl-popup-tip {
+    width: 18px !important;
+    height: 10px !important;
+    margin-left: -9px !important; /* center under popup */
+    background: transparent !important;
+    pointer-events: none;
+}
+.mapboxgl-popup-tip::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%) rotate(45deg);
+    width: 12px;
+    height: 12px;
+    background: rgba(255,255,255,.96);
+    box-shadow: none;
+    border-radius: 2px 0 0 0; /* subtle rounding to mimic AMap sharp */
+}
+.dark .mapboxgl-popup-tip::after {
+    background: rgba(33,35,40,.92);
+}

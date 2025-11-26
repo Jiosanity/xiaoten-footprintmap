@@ -43,17 +43,24 @@
   }
 
   async function bootstrapMap(container) {
-    const { json: dataUrl, amapKey: apiKey } = container.dataset;
+    const { json: dataUrl, amapKey: apiKey, provider = 'amap' } = container.dataset;
 
     if (!apiKey) {
-      container.innerHTML = '<div class="footprint-map__error">无法加载地图：请在页面中为高德脚本提供 <code>key=你的APIKey</code>，或在容器上设置 <code>data-amap-key</code> / 初始化参数 <code>amapKey</code>。</div>';
+      const hint = provider === 'mapbox' ? '<code>data-amap-key</code> / 初始化参数 <code>amapKey</code>（或提供 Mapbox Token）' : '<code>key=你的APIKey</code> 或 <code>data-amap-key</code>';
+      container.innerHTML = `<div class="footprint-map__error">无法加载地图：请在页面中为地图脚本提供 ${hint}。</div>`;
       return;
     }
 
     container.classList.add('footprint-map--loading');
 
     try {
-      await loadAmap(apiKey);
+      if (provider === 'mapbox') {
+        // 延迟加载 mapbox 适配器脚本（它会提供 window.loadMapboxAdapter / window.renderMapWithMapbox）
+        await ensureMapboxAdapterScript();
+        if (typeof window.loadMapboxAdapter === 'function') await window.loadMapboxAdapter();
+      } else {
+        await loadAmap(apiKey);
+      }
       const locations = await fetchLocations(dataUrl);
 
       if (!locations.length) {
@@ -61,12 +68,36 @@
         return;
       }
 
-      renderMap(container, locations);
+      if (provider === 'mapbox' && typeof window.renderMapWithMapbox === 'function') {
+        window.renderMapWithMapbox(container, locations, apiKey);
+      } else {
+        renderMap(container, locations);
+      }
     } catch (error) {
       container.innerHTML = '<div class="footprint-map__error">足迹地图加载失败，请稍后重试。</div>';
     } finally {
       container.classList.remove('footprint-map--loading');
     }
+  }
+
+  // 动态注入 mapbox-adapter.js（该文件在仓库中的 /js/mapbox-adapter.js）
+  let _mapboxAdapterLoader = null;
+  function ensureMapboxAdapterScript() {
+    if (_mapboxAdapterLoader) return _mapboxAdapterLoader;
+    _mapboxAdapterLoader = new Promise((resolve, reject) => {
+      // 试图查找当前脚本的路径以拼接 adapter 路径
+      const scriptTags = Array.from(document.getElementsByTagName('script'));
+      const selfScript = scriptTags.find(s => s.src && s.src.indexOf('/js/footprintmap.js') !== -1);
+      const base = selfScript ? selfScript.src.replace(/\/[^/]*$/, '') : '';
+      const adapterSrc = (base || '') + '/mapbox-adapter.js';
+      const s = document.createElement('script');
+      s.src = adapterSrc;
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('加载 mapbox-adapter.js 失败'));
+      document.head.appendChild(s);
+    });
+    return _mapboxAdapterLoader;
   }
 
   async function loadAmap(apiKey) {
@@ -185,9 +216,28 @@
       infoWindow.open(map, [point.lng, point.lat]);
       setTimeout(() => {
         setupPopupEvents();
+        // 确保弹窗在视口内可见：若弹窗超出顶部或底部，则平移地图使其可见
+        try { ensureInfoWindowVisible_AMap(map, [point.lng, point.lat]); } catch (err) { /* ignore */ }
         suppressMapClose = false;
       }, 0);
     };
+
+    // 确保 AMap InfoWindow 在可见区域：将 marker 平移到视图的偏下位置（约 60% 高度）
+    function ensureInfoWindowVisible_AMap(mapInstance, lnglat) {
+      try {
+        if (!mapInstance || !mapInstance.lngLatToContainer || !mapInstance.containerToLngLat || !mapInstance.getSize) return;
+        const pixel = mapInstance.lngLatToContainer(lnglat);
+        const size = mapInstance.getSize();
+        const desiredY = Math.floor(size.height * 0.60); // 将 marker 放置于视图 60% 高度处
+        const dy = pixel.y - desiredY;
+        if (Math.abs(dy) < 6) return; // 不需要微小调整
+        const centerPixel = { x: Math.floor(size.width / 2), y: Math.floor(size.height / 2 + dy) };
+        const newCenter = mapInstance.containerToLngLat([centerPixel.x, centerPixel.y]);
+        if (newCenter && newCenter.lng !== undefined) {
+          try { mapInstance.setCenter(newCenter); } catch (e) { /* best-effort */ }
+        }
+      } catch (e) { /* ignore */ }
+    }
 
     let allMarkers = [];
     let clusterMarkers = [];
@@ -502,9 +552,12 @@
 
   document.addEventListener('DOMContentLoaded', init);
   
-  // 暴露 API 供外部调用
+  // 暴露 API 供外部调用，并提供少量内部 helper 供适配器重用
   window.FootprintMap = {
     init: init,
-    bootstrapMap: bootstrapMap
+    bootstrapMap: bootstrapMap,
+    _renderFilters: renderFilters,
+    _renderClusterToggle: renderClusterToggle,
+    _onPopupReady: setupPopupEvents
   };
 })();

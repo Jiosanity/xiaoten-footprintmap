@@ -225,6 +225,13 @@
   <main>
     <section class="panel" style="flex:1 1 480px;">
       <h2>🗺️ 坐标拾取</h2>
+      <div style="margin:8px 0 12px; display:flex; align-items:center; gap:8px;">
+        <label style="font-size:13px; color:#475569;">地图提供商：</label>
+        <select id="providerSelect" aria-label="选择地图服务" style="padding:6px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-size:13px; width:160px;">
+          <option value="amap">高德 AMap</option>
+          <option value="mapbox">Mapbox</option>
+        </select>
+      </div>
       <div style="display:flex; gap:8px; margin-bottom:8px;">
         <input type="text" id="placeSearchInput" placeholder="搜索地点以定位拾取，如：杭州西湖" style="flex:1;" />
         <button type="button" class="secondary" id="placeSearchBtn">搜索</button>
@@ -336,8 +343,8 @@
           <button type="button" class="secondary" id="refreshPreviewBtn" style="font-size:13px; padding:7px 14px;">🔄 刷新预览</button>
         </h2>
         <div style="display:flex; gap:8px; align-items:center;">
-          <button type="button" class="secondary" id="toggleThemeBtn" style="font-size:13px; padding:7px 14px;">🌓 主题</button>
-        </div>
+              <button type="button" class="secondary" id="toggleThemeBtn" style="font-size:13px; padding:7px 14px;">🌓 主题</button>
+          </div>
       </div>
       <div id="previewMapWrap" style="margin-top:12px;">
         <div id="previewMap" class="footprint-map" style="width:100%;height:500px;" data-amap-key="4727334ebc13608dbe9ba75266c3d41a"></div>
@@ -360,7 +367,17 @@
   <script defer src="static/js/footprintmap.js"></script>
   <script src="static/js/theme.js"></script>
   <script src="static/js/utils.js"></script>
+  <!-- 本地 Mapbox token（可选）：复制示例为 local_mapbox_token.js 并填入真实 token（不要提交） -->
+  <script src="static/js/local_mapbox_token.js"></script>
   <script>
+    // Mapbox token：优先使用全局覆盖或 localStorage 中的注入值（便于自动化注入）。
+    // 注意：不要把长期有效的 token 提交到仓库；仓库中不应包含任何回退 token。
+    const MAPBOX_TOKEN = (function(){
+      try{ if(window && window.__MAPBOX_TOKEN_OVERRIDE) return window.__MAPBOX_TOKEN_OVERRIDE; }catch(e){}
+      try{ const t = localStorage.getItem('MAPBOX_TOKEN'); if(t) return t; }catch(e){}
+      return '';
+    })();
+
     const form = document.getElementById('locationForm');
     const photosListEl = document.getElementById('photosList');
     const photoInput = document.getElementById('photoInput');
@@ -961,69 +978,148 @@
 
     // 初始渲染（不再自动加载示例数据，初始状态保持为空）
     (function initialRender(){
+      const savedProvider = lsGet('footprintmap_builder_provider','mapbox');
+      // 若存在地点数据则渲染并生成预览，保证在刷新后使用上次选择的 provider
       if(locations && locations.length>0){
-        renderLocations(); renderPhotosTemp();
+        renderLocations(); renderPhotosTemp(); generateJson(); renderPreviewMap();
         return;
       }
-      // 不自动加载示例：直接渲染空状态，保持与刷新预览时一致的提示（含导入示例数据提示）
+      // 无地点数据：仍渲染列表和占位提示，同时确保 preview 使用保存的 provider（避免刷新后显示默认 AMap）
       renderLocations(); renderPhotosTemp();
       try{
         const wrap = document.getElementById('previewMapWrap');
         const previewMapEl = document.getElementById('previewMap');
-        if(wrap && previewMapEl && !wrap._initialized){
-          previewMapEl.innerHTML = '<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点、导入 JSON 文件或导入示例数据，然后点击"刷新预览"。</div>';
-          wrap._initialized = true;
+        if(wrap && previewMapEl){
+          // 将 previewMap 的 provider 与 key 设置为上次选择，便于后续切换一致性
+          previewMapEl.dataset.provider = savedProvider;
+          previewMapEl.dataset.amapKey = savedProvider === 'mapbox' ? MAPBOX_TOKEN : '4727334ebc13608dbe9ba75266c3d41a';
+          if(!wrap._initialized){
+            previewMapEl.innerHTML = '<div style="padding:20px;font-size:13px;color:#64748b;text-align:center;height:500px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;">暂无足迹数据，请添加地点、导入 JSON 文件或导入示例数据，然后点击"刷新预览"。</div>';
+            wrap._initialized = true;
+          }
         }
       }catch(e){/* ignore */}
     })();
 
-    // 地图初始化与点击拾取
-    const map = new AMap.Map('map',{ viewMode:'2D', zoom:4, center:[105,36] });
-    map.on('click', function(ev){ if(ev && ev.lnglat){ const { lng, lat } = ev.lnglat; document.getElementById('coordinates').value = lng.toFixed(6)+','+lat.toFixed(6); } });
-    // 地点搜索
-    let placeSearch = null;
-    AMap.plugin('AMap.PlaceSearch', ()=>{ 
-      placeSearch = new AMap.PlaceSearch({ 
-        pageSize: 10,
-        pageIndex: 1
-      }); 
-    });
+    // 地图拾取与搜索（支持 AMap 与 Mapbox）
+    let amapPickerMap = null;
+    let mapboxPickerMap = null;
+    let mapboxPickerMarker = null;
+    let amapPlaceSearch = null;
+
+    function ensureMapboxAdapterScriptInEditor(){
+      return new Promise((resolve,reject)=>{
+        if(window.loadMapboxAdapter && window.mapboxgl) return resolve();
+        if(document.querySelector('script[src="static/js/mapbox-adapter.js"]')){
+          // already injected, wait for loader
+          const check = () => { if(window.loadMapboxAdapter) return resolve(); setTimeout(check,50); };
+          check();
+          return;
+        }
+        const s = document.createElement('script'); s.src = 'static/js/mapbox-adapter.js'; s.async = true;
+        s.onload = () => { const wait = () => { if(window.loadMapboxAdapter) return resolve(); setTimeout(wait,50); }; wait(); };
+        s.onerror = () => reject(new Error('加载 mapbox-adapter.js 失败'));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function initPickerMap(){
+      // 优先使用 localStorage 中保存的 provider，避免页面刷新后 DOM select 的默认值覆盖
+      const savedProvider = lsGet('footprintmap_builder_provider', null);
+      const provider = savedProvider || document.getElementById('providerSelect')?.value || 'mapbox';
+      const mapEl = document.getElementById('map');
+      // 清理容器与已存在实例
+      mapEl.innerHTML = '';
+      if(amapPickerMap){ try{ amapPickerMap.destroy && amapPickerMap.destroy(); }catch(e){} amapPickerMap = null; }
+      if(mapboxPickerMap){ try{ mapboxPickerMap.remove(); }catch(e){} mapboxPickerMap = null; }
+      mapboxPickerMarker = null;
+
+      if(provider === 'mapbox'){
+        try{
+          await ensureMapboxAdapterScriptInEditor();
+          if(typeof window.loadMapboxAdapter === 'function') await window.loadMapboxAdapter();
+          // 初始化 Mapbox 地图用于拾取（WGS84），中心使用中国范围
+          mapboxgl.accessToken = MAPBOX_TOKEN;
+          mapboxPickerMap = new mapboxgl.Map({ container: 'map', style: document.documentElement.classList.contains('dark') ? 'mapbox://styles/mapbox/dark-v10' : 'mapbox://styles/mapbox/light-v10', center:[105,36], zoom:4 });
+          mapboxPickerMap.on('click', (e)=>{
+            const lng = e.lngLat.lng; const lat = e.lngLat.lat;
+            // 将 WGS84 转为 GCJ-02 存储，若转换函数可用则使用之
+            let outLng = lng, outLat = lat;
+            if(typeof window.wgs84togcj02 === 'function'){
+              const p = window.wgs84togcj02(lng, lat); outLng = p[0]; outLat = p[1];
+            }
+            document.getElementById('coordinates').value = outLng.toFixed(6)+','+outLat.toFixed(6);
+            // 标记
+            if(mapboxPickerMarker) mapboxPickerMarker.remove();
+            const el = document.createElement('div'); el.style.width='20px'; el.style.height='20px'; el.style.background='rgba(99,102,241,0.9)'; el.style.borderRadius='50%'; el.style.border='2px solid white';
+            mapboxPickerMarker = new mapboxgl.Marker({ element: el }).setLngLat([lng, lat]).addTo(mapboxPickerMap);
+          });
+        }catch(err){ console.warn('初始化 Mapbox 拾取地图失败', err); mapEl.innerHTML = '<div style="padding:16px;color:#64748b">Mapbox 加载失败，请检查网络或 token。</div>'; }
+      } else {
+        // AMap
+        try{
+          amapPickerMap = new AMap.Map('map',{ viewMode:'2D', zoom:4, center:[105,36] });
+          amapPickerMap.on('click', function(ev){ if(ev && ev.lnglat){ const { lng, lat } = ev.lnglat; document.getElementById('coordinates').value = lng.toFixed(6)+','+lat.toFixed(6); amapPickerMap.clearMap(); new AMap.Marker({ position: [lng, lat], map: amapPickerMap }); } });
+          AMap.plugin('AMap.PlaceSearch', ()=>{ amapPlaceSearch = new AMap.PlaceSearch({ pageSize: 10, pageIndex: 1 }); });
+        }catch(e){ console.warn('初始化 AMap 拾取失败', e); mapEl.innerHTML = '<div style="padding:16px;color:#64748b">AMap 初始化失败</div>'; }
+      }
+    }
+
+    // 启动初始 picker
+    initPickerMap();
+
+    // provider 切换时也重建 picker
+    const providerSel = document.getElementById('providerSelect');
+    if(providerSel) providerSel.addEventListener('change', ()=>{ lsSet('footprintmap_builder_provider', providerSel.value); initPickerMap(); });
+
     document.getElementById('placeSearchBtn').onclick=()=> doPlaceSearch();
     document.getElementById('placeSearchInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doPlaceSearch(); } });
-    function doPlaceSearch(){
-      const kw = document.getElementById('placeSearchInput').value.trim(); 
+
+    async function doPlaceSearch(){
+      const kw = document.getElementById('placeSearchInput').value.trim();
       if(!kw) return;
-      if(!placeSearch){ 
-        alert('搜索服务尚未就绪，请稍后再试'); 
-        return; 
+      const provider = document.getElementById('providerSelect')?.value || lsGet('footprintmap_builder_provider','mapbox');
+      if(provider === 'mapbox'){
+        try{
+          await ensureMapboxAdapterScriptInEditor(); if(typeof window.loadMapboxAdapter === 'function') await window.loadMapboxAdapter();
+          const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(kw)}.json?access_token=${MAPBOX_TOKEN}&limit=5`;
+          const res = await fetch(url);
+          if(!res.ok) throw new Error('Mapbox 地理编码请求失败');
+          const data = await res.json();
+          if(data && data.features && data.features.length){
+            const f = data.features[0];
+            const [lng, lat] = f.center; // WGS84
+            // 将 WGS84 转为 GCJ-02 写入输入
+            let outLng = lng, outLat = lat;
+            if(typeof window.wgs84togcj02 === 'function'){ const p = window.wgs84togcj02(lng, lat); outLng = p[0]; outLat = p[1]; }
+            document.getElementById('coordinates').value = outLng.toFixed(6)+','+outLat.toFixed(6);
+            // 在 mapbox picker 上添加标记并移动视野
+            if(mapboxPickerMap){
+              if(mapboxPickerMarker) mapboxPickerMarker.remove();
+              const el = document.createElement('div'); el.style.width='20px'; el.style.height='20px'; el.style.background='rgba(99,102,241,0.9)'; el.style.borderRadius='50%'; el.style.border='2px solid white';
+              mapboxPickerMarker = new mapboxgl.Marker({ element: el }).setLngLat([lng, lat]).addTo(mapboxPickerMap);
+              mapboxPickerMap.easeTo({ center:[lng,lat], zoom:14 });
+            }
+            alert('已定位到：' + (f.place_name || kw));
+            return;
+          }
+          alert('未找到结果');
+        }catch(err){ alert('搜索失败：'+ (err && err.message? err.message : err)); }
+        return;
       }
-      placeSearch.search(kw, (status, result)=>{
+      // provider === 'amap'
+      if(!amapPlaceSearch){ alert('搜索服务尚未就绪，请稍后再试'); return; }
+      amapPlaceSearch.search(kw, (status, result)=>{
         console.log('搜索状态:', status, '结果:', result);
         if(status === 'complete' && result.poiList && result.poiList.pois && result.poiList.pois.length > 0){
           const poi = result.poiList.pois[0];
-          console.log('找到地点:', poi);
           if(poi.location){ 
-            const lng = poi.location.lng; 
-            const lat = poi.location.lat; 
-            map.setZoomAndCenter(14, [lng, lat]); 
+            const lng = poi.location.lng; const lat = poi.location.lat; 
+            if(amapPickerMap){ amapPickerMap.setZoomAndCenter(14, [lng, lat]); amapPickerMap.clearMap(); new AMap.Marker({ position: [lng, lat], map: amapPickerMap }); }
             document.getElementById('coordinates').value = lng.toFixed(6)+','+lat.toFixed(6);
-            // 在地图上添加临时标记
-            map.clearMap();
-            new AMap.Marker({
-              position: [lng, lat],
-              map: map
-            });
             alert('已定位到：' + poi.name);
-          } else {
-            alert('找到地点但无坐标信息，请尝试其他关键词');
-          }
-        } else if(status === 'no_data') {
-          alert('未找到"' + kw + '"，请尝试更具体的关键词（如：杭州西湖风景区、北京天安门广场）'); 
-        } else if(status === 'error') {
-          alert('搜索出错，请检查网络或稍后重试');
-        } else {
-          alert('未找到相关地点，请尝试更具体的关键词'); 
-        }
+          } else { alert('找到地点但无坐标信息，请尝试其他关键词'); }
+        } else if(status === 'no_data') { alert('未找到"' + kw + '"，请尝试更具体的关键词'); } else if(status === 'error') { alert('搜索出错，请检查网络或稍后重试'); } else { alert('未找到相关地点，请尝试更具体的关键词'); }
       });
     }
 
@@ -1077,7 +1173,14 @@
       wrap._lastBlobUrl = url;
       
       // 完全重建容器
-      wrap.innerHTML = `<div id="previewMap" class="footprint-map" style="height:400px;border-radius:8px;overflow:hidden;" data-amap-key="4727334ebc13608dbe9ba75266c3d41a" data-json="${url}"></div>`;
+      // 使用 Mapbox 进行预览（provider 可改为 'amap'）
+      // 根据当前 provider 选择构建 previewMap 容器（provider: 'amap' 或 'mapbox'）
+      const providerSelectEl = document.getElementById('providerSelect');
+      // 优先使用 localStorage 中保存的 provider，以避免在页面刷新时被 DOM 中默认属性覆盖
+      const savedProvider = lsGet('footprintmap_builder_provider', null);
+      const provider = savedProvider || (providerSelectEl ? providerSelectEl.value : 'mapbox');
+      const key = provider === 'mapbox' ? MAPBOX_TOKEN : '4727334ebc13608dbe9ba75266c3d41a';
+      wrap.innerHTML = `<div id="previewMap" class="footprint-map" style="height:400px;border-radius:8px;overflow:hidden;" data-provider="${provider}" data-amap-key="${key}" data-json="${url}"></div>`;
       
       // 等待 DOM 更新后手动初始化地图
       setTimeout(() => {
@@ -1092,6 +1195,20 @@
       generateJson();
       renderPreviewMap();
     }
+
+    // provider 下拉控制与持久化
+    (function initProviderSelect(){
+      const sel = document.getElementById('providerSelect');
+      if(!sel) return;
+      // 恢复上次选择，默认使用 mapbox（因为编辑器内已经注入 MAPBOX_TOKEN 便于本地测试）
+      const saved = lsGet('footprintmap_builder_provider','mapbox');
+      sel.value = saved;
+      sel.addEventListener('change', ()=>{
+        lsSet('footprintmap_builder_provider', sel.value);
+        // 重新渲染预览
+        renderPreviewMap();
+      });
+    })();
 
     // 样式：为 invalid 类添加高亮（插入 style 动态确保覆盖）
     const styleEl = document.createElement('style');

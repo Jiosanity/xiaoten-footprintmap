@@ -43,3 +43,6 @@ Desktop.ini
 # Build artifacts
 dist/
 build/
+
+# Local Mapbox token (local development only; DO NOT commit real token)
+/static/js/local_mapbox_token.js

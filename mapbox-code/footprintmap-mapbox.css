@@ -1,0 +1,92 @@
+/* footprintmap-mapbox.css
+   Extracted styles for Mapbox popup and photo viewer used by xiaoten-footprintmap
+*/
+
+/* Info Popup */
+.footprint-popup {
+    width: 260px;
+    max-width: calc(100vw - 16px);
+    font-size: .95rem;
+    line-height: 1.5;
+    background: rgba(255,255,255,.9);
+    color: #111826;
+    border: none;
+    border-radius: 0;
+    padding: 12px 14px;
+    box-shadow: none;
+    caret-color: transparent;
+}
+
+@media (max-width: 640px) {
+    .footprint-popup {
+        width: 200px;
+    }
+}
+
+.dark .footprint-popup {
+    background: rgba(33,35,40,.85);
+    color: rgba(255, 255, 255, 0.92);
+    border: none;
+}
+
+.footprint-popup h4 { margin: 0 0 .35rem; font-size: 1rem; }
+.footprint-popup p { margin: 0 0 .35rem; font-size: .9rem; }
+.footprint-popup__meta { font-size: .78rem; color: #666; margin-bottom: .25rem; }
+.dark .footprint-popup__meta { color: #aaa; }
+.footprint-popup__tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: .35rem; }
+.footprint-popup__tag { font-size: .75rem; padding: 2px 6px; border-radius: 4px; background: rgba(6, 190, 182, 0.12); color: #06beb6; }
+.dark .footprint-popup__tag { background: rgba(6, 190, 182, 0.2); color: #5ee7df; }
+.footprint-popup__links { margin-top: .35rem; }
+.footprint-popup__link { display: inline-block; padding: 5px 12px; border-radius: 4px; background: #111826; color: #fff; font-size: .85rem; text-decoration: none; transition: background 0.2s ease; }
+.footprint-popup__link:hover { background: #06beb6; }
+.dark .footprint-popup__link { background: #f7f7f7; color: #111; }
+.dark .footprint-popup__link:hover { background: #5ee7df; color: #111; }
+
+/* Photos */
+.footprint-popup__photos { position: relative; margin-top: .5rem; overflow: hidden; }
+.footprint-popup__track { display: flex; gap: 6px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; }
+.footprint-popup__track::-webkit-scrollbar { display: none; }
+.footprint-popup__slide { margin: 0; flex-shrink: 0; flex-basis: 120px; }
+.footprint-popup__slide img { display: block; width: 120px; height: 90px; object-fit: cover; border-radius: 4px; cursor: pointer; transition: none; }
+.footprint-popup__slide img:hover { transform: none; box-shadow: none; }
+.footprint-popup__photos-btn { position: absolute; top: 0; bottom: 0; margin: auto 0; transform: none; border: none; background: rgba(17, 24, 38, 0.7); color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; z-index: 2; }
+.footprint-popup__photos-btn--prev { left: 4px; }
+.footprint-popup__photos-btn--next { right: 4px; }
+.dark .footprint-popup__photos-btn { background: rgba(255, 255, 255, 0.8); color: #111; }
+
+/* Photo Viewer */
+.footprint-photo-viewer { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.7); z-index: 999; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+.footprint-photo-viewer.is-visible { opacity: 1; pointer-events: auto; }
+.footprint-photo-viewer__dialog { position: relative; width: auto; max-width: 90vw; max-height: 90vh; background: transparent; border-radius: 0; padding: 0; box-shadow: none; z-index: 1; display: flex; align-items: center; justify-content: center; }
+.footprint-photo-viewer__dialog img { max-width: 90vw; max-height: 85vh; border-radius: 0; box-shadow: none; }
+.footprint-photo-viewer__close { position: absolute; top: .5rem; right: .5rem; background: rgba(0, 0, 0, 0.5); color: #fff; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; line-height: 1; box-sizing: border-box; }
+.footprint-photo-viewer-open { overflow: hidden; }
+.footprint-photo-viewer__mask { position: absolute; inset: 0; }
+
+@media (max-width: 520px) {
+    .amap-info-content, .amap-info-outer, .amap-info-inner { max-width: calc(100vw - 16px) !important; width: auto !important; }
+    .footprint-popup { width: clamp(220px, 70vw, 260px); max-width: calc(100vw - 16px); font-size: .87rem; line-height: 1.4; padding: 10px 12px; }
+    .footprint-popup h4 { font-size: .94rem; margin-bottom: .25rem; }
+    .footprint-popup p { font-size: .82rem; margin-bottom: .25rem; }
+    .footprint-popup__meta { font-size: .7rem; }
+    .footprint-popup__tag { font-size: .7rem; padding: 2px 5px; }
+    .footprint-popup__link { font-size: .75rem; padding: 4px 10px; }
+    .footprint-popup__photos { margin-top: .35rem; }
+    .footprint-popup__slide { flex-basis: 100px; }
+    .footprint-popup__slide img { width: 100px; height: 80px; }
+    .footprint-popup__photos-btn { width: 24px; height: 24px; font-size: .85rem; }
+}
+
+/* Mapbox popup visual overrides: remove Mapbox default shadow/tip and prevent horizontal scroll */
+.mapboxgl-popup-content { padding: 0 !important; background: transparent !important; box-shadow: none !important; }
+.mapboxgl-popup-tip { display: none !important; }
+.amap-info-content { padding: 0 !important; background: transparent !important; }
+.amap-info-content .footprint-popup { box-shadow: none !important; border-radius: 10px; overflow: hidden; max-width: 100%; box-sizing: border-box; background: rgba(255,255,255,.96); padding: 10px 12px; }
+.dark .amap-info-content .footprint-popup { background: rgba(33,35,40,.92); }
+.footprint-popup { overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+.footprint-popup__track { max-width: 100%; -webkit-overflow-scrolling: touch; }
+
+/* Restore a lightweight tip arrow styled like AMap's sharp pointer */
+.mapboxgl-popup-tip { width: 18px !important; height: 10px !important; margin-left: -9px !important; background: transparent !important; pointer-events: none; }
+.mapboxgl-popup-tip::after { content: ''; position: absolute; left: 50%; top: 0; transform: translateX(-50%) rotate(45deg); width: 12px; height: 12px; background: rgba(255,255,255,.96); box-shadow: none; border-radius: 2px 0 0 0; }
+.dark .mapboxgl-popup-tip::after { background: rgba(33,35,40,.92); }
