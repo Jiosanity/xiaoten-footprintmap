@@ -9,8 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1; /* Indigo 500 */
+            --primary: #6366f1; /* Indigo Main brand color */
             --primary-hover: #4f46e5;
+            --accent: #06b6d4;  /* Cyan - for guides and high visibility areas */
             --bg-app: #f1f5f9;
             --bg-panel: #ffffff;
             --text-main: #1e293b;
@@ -152,6 +153,7 @@
         .workspace {
             flex: 1; position: relative;
             background-color: #e2e8f0;
+            /* Background pattern */
             background-image: 
                 linear-gradient(45deg, #cbd5e1 25%, transparent 25%), 
                 linear-gradient(-45deg, #cbd5e1 25%, transparent 25%), 
@@ -176,33 +178,39 @@
             border-radius: 4px;
         }
 
-        /* Crop Box */
+        /* --- CROP BOX FIXES --- */
         #cropBox {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            /* 漂亮的白色边框 + 阴影，保证在深色/浅色图上都可见 */
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 0 1px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(0,0,0,0.3);
+            /* 使用高亮青色描边，并加上深色阴影描边，确保任何背景下可见 */
+            border: 2px solid var(--accent); 
+            box-shadow: 
+                0 0 0 1px rgba(0,0,0,0.4), /* 深色外描边 */
+                inset 0 0 0 1px rgba(255,255,255,0.2), /* 浅色内描边 */
+                0 4px 20px rgba(0,0,0,0.2); /* 投影 */
             cursor: move;
             z-index: 10;
         }
-        /* 网格线：使用更加微妙的半透明白 */
+        /* 网格线：使用清晰的半透明青色实线 */
         #cropBox::before {
             content: ''; position: absolute; top:0; left:0; right:0; bottom:0; pointer-events: none;
             background: 
-                linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px);
+                linear-gradient(to right, rgba(6, 182, 212, 0.7) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(6, 182, 212, 0.7) 1px, transparent 1px);
             background-size: inherit; /* 继承父级的 background-size */
         }
 
         /* Handles */
         .handle {
             width: var(--handle-size); height: var(--handle-size);
-            background: white; border: 2px solid var(--primary);
+            background: white; 
+            /* 手柄边框也使用青色 */
+            border: 2px solid var(--accent);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             border-radius: 50%;
             position: absolute; z-index: 11;
             transition: transform 0.1s;
         }
-        .handle:hover { transform: scale(1.2); background: var(--primary); }
+        .handle:hover { transform: scale(1.2); background: var(--accent); }
         .nw { top: -8px; left: -8px; cursor: nw-resize; }
         .ne { top: -8px; right: -8px; cursor: ne-resize; }
         .sw { bottom: -8px; left: -8px; cursor: sw-resize; }
@@ -218,14 +226,15 @@
         /* Loading Overlay */
         .loading {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8); z-index: 100;
+            background: rgba(255,255,255,0.9); z-index: 100;
             display: none; align-items: center; justify-content: center;
             flex-direction: column; color: var(--primary); font-weight: 600;
+            backdrop-filter: blur(4px);
         }
         .spinner {
             width: 40px; height: 40px; border: 4px solid #e2e8f0;
             border-top-color: var(--primary); border-radius: 50%;
-            animation: spin 1s linear infinite; margin-bottom: 15px;
+            animation: spin 0.8s linear infinite; margin-bottom: 15px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -331,6 +340,7 @@
     </div>
 
     <script>
+        // Javascript 逻辑保持不变
         const fileInput = document.getElementById('fileInput');
         const sourceImg = document.getElementById('sourceImg');
         const imgContainer = document.getElementById('imgContainer');
@@ -399,8 +409,6 @@
         function updateGridLines() {
             const cols = parseInt(colsInput.value) || 1;
             const rows = parseInt(rowsInput.value) || 1;
-            // Update pseudo-element grid via css variable or just background size
-            // Since we can't easily set pseudo styles in JS, we set it on the element
             cropBox.style.backgroundSize = `${100/cols}% ${100/rows}%`;
             updateStatus();
         }
@@ -511,13 +519,10 @@
                         destH = parseInt(document.getElementById('targetH').value);
                     }
 
-                    // Create offscreen canvas once
                     const canvas = document.createElement('canvas');
                     canvas.width = destW;
                     canvas.height = destH;
                     const ctx = canvas.getContext('2d');
-                    // Optimization: Disable image smoothing if scaling up pixel art, enable for photos
-                    // ctx.imageSmoothingEnabled = true; 
 
                     let count = 0;
                     for (let r = 0; r < rows; r++) {
@@ -532,7 +537,6 @@
                                 destW, destH
                             );
 
-                            // We need to await blob generation
                             await new Promise(resolve => {
                                 canvas.toBlob(blob => {
                                     folder.file(`emoji_${String(count).padStart(2,'0')}.png`, blob);
