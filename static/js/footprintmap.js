@@ -159,6 +159,7 @@
     mapCanvas.className = 'footprint-map__canvas';
     container.appendChild(mapCanvas);
 
+    // 初始化地图，默认中心点设为第一个数据点，但随后会被 fitViewToPoints 覆盖
     const map = new AMap.Map(mapCanvas, {
       zoom: 4,
       center: [locations[0].lng, locations[0].lat],
@@ -167,6 +168,34 @@
       rotateEnable: false,
       pitchEnable: false
     });
+
+    // 1. 定义一个通用函数：根据传入的数据点，自动调整地图视野
+    // ---------------------------------------------------------
+    const fitViewToPoints = (points) => {
+      if (!points || points.length === 0) return;
+
+      // 情况A：只有一个点，直接定位，避免缩放过大
+      if (points.length === 1) {
+        map.setZoomAndCenter(10, [points[0].lng, points[0].lat]);
+        return;
+      }
+
+      // 情况B：多个点，建立隐形折线来计算边界
+      // 这样可以忽略“集群图标”的影响，只根据实际物理坐标来缩放
+      const path = points.map(p => [p.lng, p.lat]);
+      const hiddenBounds = new AMap.Polyline({ 
+        path: path, 
+        strokeOpacity: 0, // 完全透明
+        bubble: true,     // 避免干扰点击事件
+        map: map          // 必须add到地图上才能计算
+      });
+      
+      // 设置视野：上右下左留出 60-80px 的边距，让点不要贴在屏幕边缘
+      map.setFitView([hiddenBounds], false, [60, 80, 60, 80]);
+      
+      // 用完即焚
+      map.remove(hiddenBounds);
+    };
 
     map.plugin(['AMap.Scale', 'AMap.ToolBar'], () => {
       const isMobile = window.matchMedia('(max-width: 640px)').matches;
@@ -267,23 +296,31 @@
     });
 
     const categories = [...new Set(locations.flatMap(l => l.categories))].filter(Boolean).sort();
+    
+    // 2. 渲染筛选按钮
     if (categories.length > 1) {
       renderFilters(container, categories, (cat) => {
         infoWindow.close();
+        // 更新当前数据源
         markerData = cat === FILTER_ALL ? locations : locations.filter(l => l.categories.includes(cat));
         updateClusters();
-        map.setFitView(null, false, [60, 80, 60, 80]);
+        // 关键点：切换标签时，调用通用函数适应视野
+        fitViewToPoints(markerData);
       });
-    } else {
-      map.setFitView(null, false, [60, 80, 60, 80]);
     }
 
     renderClusterToggle(container, (enabled) => {
       clusterEnabled = enabled;
       updateClusters();
+      // 如果希望在切换“集群模式”开关时也重新调整视野，可以取消下面这行的注释
+      // fitViewToPoints(markerData); 
     });
 
     registerThemeSync(map);
+
+    // 3. 页面初始化完成时，直接调用一次，适应“全部”数据
+    // 这样无论初始数据是否被聚合，地图都会缩放到包含所有点的状态
+    fitViewToPoints(locations);
   }
 
   function buildMarkerHtml(point) {

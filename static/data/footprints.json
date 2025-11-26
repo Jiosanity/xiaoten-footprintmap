@@ -1,0 +1,388 @@
+{
+"locations": [
+{
+	"name": "北京 Beijing",
+	"coordinates": "116.4074,39.9042",
+	"date": "2005, 2008, 2009, 2011, 2012, 2014, 2015, 2018, 2024",
+	"url": "https://synyan.cn/tag/北京",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.cn/wp-content/uploads/cities/beijing.jpg"
+	]
+},
+{
+	"name": "上海 Shanghai",
+	"coordinates": "121.4737,31.2304",
+	"date": "1992, 1998, 2000, 2005, 2008 - 2018, 2021, 2024, 2025",
+	"url": "https://synyan.cn/tag/上海",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/51/DSC01574_p-1.jpg?x-oss-process=style%2Fwatermark"
+	]
+},
+{
+	"name": "无锡 Wuxi",
+	"coordinates": "120.295057,31.575611",
+	"date": "1980 - 2005, 2008 - Present",
+	"url": "https://synyan.cn/tag/无锡",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/3902/20100725-City-birdeye_p-1.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "常州 Changzhou",
+	"coordinates": "119.940491,31.790053",
+	"date": "1988, 1990, 2008 - 2010, 2013 - 2023",
+	"url": "https://synyan.cn/tag/常州",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/89/a14-P1010589_p.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "南京 Nanjing",
+	"coordinates": "118.792419,32.060464",
+	"date": "1988, 2003, 2010, 2013, 2018 - 2021, 2023",
+	"url": "https://synyan.cn/tag/南京",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/32/20100101-NJ6-24_p-1.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "苏州 Suzhou",
+	"coordinates": "120.621643,31.299675",
+	"date": "1990, 2010, 2016, 2018 - 2025",
+	"url": "https://synyan.cn/tag/苏州",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/43/20100320_SZ_021_p-1.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "杭州 Hangzhou",
+	"coordinates": "120.145111,30.242459",
+	"date": "2010",
+	"url": "https://synyan.cn/tag/杭州",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/30/20100403_HZ4_039_p-1.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "临安 Lin'an",
+	"coordinates": "119.730377,30.238307",
+	"date": "2011",
+	"url": "https://synyan.cn/tag/临安",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/6590/DSC06719_1024_p_h-1.jpg?x-oss-process=style/watermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "浙西大峡谷 Zhexi Grand Canyon",
+	"coordinates": "119.070339,30.252246",
+	"date": "2011",
+	"url": "https://synyan.cn/tag/浙西大峡谷",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/6547/DSC06644_1024_p_h-1.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "双溪 Shuangxi",
+	"coordinates": "119.829597,30.407229",
+	"date": "2011",
+	"url": "https://synyan.cn/tag/双溪",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/6643/20110529063_p_h-1.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "西安 Xi'an",
+	"coordinates": "108.943310,34.248792",
+	"date": "1998 - 2003, 2009",
+	"url": "https://synyan.cn/tag/西安",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/50/P1060969_p-1.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "太白山 Mount Taibai",
+	"coordinates": "107.805061,33.994896",
+	"date": "1999",
+	"url": "https://synyan.cn/tag/太白山",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "华山 Mount Hua",
+	"coordinates": "110.078888,34.498635",
+	"date": "2000, 2009",
+	"url": "https://synyan.cn/tag/华山",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/50/P1060932_p-1.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "汉中 Hanzhong",
+	"coordinates": "107.026371,33.077508",
+	"date": "2001",
+	"url": "https://synyan.cn/tag/汉中",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "武汉 Wuhan",
+	"coordinates": "114.279785,30.609550",
+	"date": "2011",
+	"url": "https://synyan.cn/tag/武汉",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/5562/DSC03755_p-1.jpg?x-oss-process=style/watermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "皤滩 Potan",
+	"coordinates": "120.536499,28.741172",
+	"date": "2010",
+	"url": "https://synyan.cn/tag/皤滩",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/33/DSC_9003_1024_p-1-1.jpg?x-oss-process=style%2Fwatermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "阿布扎比 Abu Dhabi",
+	"coordinates": "54.366667,24.466667",
+	"date": "2012",
+	"url": "https://synyan.cn/tag/阿布扎比",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/10168/IMG_0241_1024_p-1.jpg?x-oss-process=style/watermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "旧金山 San Francisco",
+	"coordinates": "-122.419416,37.774929",
+	"date": "2010, 2011",
+	"url": "https://synyan.cn/tag/旧金山",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/7203/DSC07805_1024-1.jpg?x-oss-process=style/watermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "墨尔本 Melbourne",
+	"coordinates": "144.963056,-37.813611",
+	"date": "2004 - 2009",
+	"url": "https://synyan.cn/tag/墨尔本",
+	"urlLabel": "游记",
+	"photos": [
+	"https://synyan.net/travel/48/20091109-MEL-14_p-1.jpg?x-oss-process=style/watermark_webp"
+	],
+	"categories": ["去过"],
+	"markerColor": "ocean"
+},
+{
+	"name": "悉尼 Sydney",
+	"coordinates": "151.20689,-33.873651",
+	"date": "2008",
+	"url": "https://synyan.cn/tag/悉尼",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/107/DSC_5808-exp_p.jpg?x-oss-process=style/watermark_webp"
+	]
+},
+{
+	"name": "霍巴特 Hobart",
+	"coordinates": "147.323815,-42.881903",
+	"date": "2006, 2007, 2009",
+	"url": "https://synyan.cn/tag/霍巴特",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/48/20091109-MEL2-6_p-1.jpg?x-oss-process=style/watermark_webp"
+	]
+},
+{
+	"name": "富森 Füssen",
+	"coordinates": "10.691523,47.572078",
+	"date": "2009",
+	"url": "https://synyan.cn/tag/富森",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/57/P1100304_p-1.jpg?x-oss-process=style/watermark_webp"
+	]
+},
+{
+	"name": "鹰脖峡 Eaglehawk Neck",
+	"coordinates": "147.924209,-43.018435",
+	"date": "2007",
+	"url": "https://synyan.cn/tag/鹰脖峡",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/141/DSC_3427_p_p.jpg?x-oss-process=style/watermark_webp"
+	]
+},
+{
+	"name": "马德里 Madrid",
+	"coordinates": "-3.700345,40.416691",
+	"date": "2009",
+	"url": "https://synyan.cn/tag/马德里",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/77/a20-P1040417_7p.jpg?x-oss-process=style/watermark_webp"
+	]
+},
+{
+	"name": "阿格拉 Agra",
+	"coordinates": "78.018529,27.182558",
+	"date": "2009",
+	"url": "https://synyan.cn/tag/阿格拉",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/8817/DSC00865_1024_p-1.jpg?x-oss-process=style/watermark_webp"
+	]
+},
+{
+	"name": "阿利坎特 Alicante",
+	"coordinates": "-0.480994,38.34521",
+	"date": "2009",
+	"url": "https://synyan.cn/tag/阿利坎特",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/52/P1100736_p-1.jpg?x-oss-process=style/watermark_webp"
+	]
+},
+{
+	"name": "穆西亚 Murcia",
+	"coordinates": "-1.12989,37.983445",
+	"date": "2009",
+	"url": "https://synyan.cn/tag/穆西亚",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/52/P1100964_p-1.jpg?x-oss-process=style/watermark_webp"
+	]
+},
+{
+	"name": "迪塞贝格 Dünserberg",
+	"coordinates": "9.7241,47.227671",
+	"date": "2009",
+	"url": "https://synyan.cn/tag/迪塞贝格",
+	"urlLabel": "游记",
+	"categories": ["去过"],
+	"markerColor": "ocean",
+	"photos": [
+	"https://synyan.net/travel/34/DSC_7633_p_p-1.jpg?x-oss-process=style/watermark_webp"
+	]
+},
+{
+	"name": "成都 Chengdu",
+	"coordinates": "104.082653,30.631233",
+	"date": "2026",
+	"url": "https://synyan.cn/tag/成都",
+	"urlLabel": "游记",
+	"categories": ["计划"],
+	"markerColor": "sunset"
+},
+{
+	"name": "都江堰 Dujiangyan",
+	"coordinates": "103.608282,31.000272",
+	"date": "2026",
+	"url": "https://synyan.cn/tag/都江堰",
+	"urlLabel": "游记",
+	"categories": ["计划"],
+	"markerColor": "sunset"
+},
+{
+	"name": "青城山 Mount Qingcheng",
+	"coordinates": "103.558845,30.907527",
+	"date": "2026",
+	"url": "https://synyan.cn/tag/青城山",
+	"urlLabel": "游记",
+	"categories": ["计划"],
+	"markerColor": "sunset"
+},
+{
+	"name": "三星堆 Sanxingdui",
+	"coordinates": "104.204270,30.961397",
+	"date": "2026",
+	"url": "https://synyan.cn/tag/三星堆",
+	"urlLabel": "游记",
+	"categories": ["计划"],
+	"markerColor": "sunset"
+},
+{
+	"name": "九寨沟 Jiuzhaigou",
+	"coordinates": "103.918445,33.259851",
+	"date": "2026",
+	"url": "https://synyan.cn/tag/九寨沟",
+	"urlLabel": "游记",
+	"categories": ["计划"],
+	"markerColor": "sunset"
+},
+{
+	"name": "黄龙 Huanglong",
+	"coordinates": "103.909634,32.782026",
+	"date": "2026",
+	"url": "https://synyan.cn/tag/黄龙",
+	"urlLabel": "游记",
+	"categories": ["计划"],
+	"markerColor": "sunset"
+}
+]
+}
