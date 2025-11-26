@@ -3,236 +3,398 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7x4 表情包切图工具 (16:9)</title>
+    <title>高级表情包网格裁剪工具</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        :root {
-            --primary-color: #4a90e2;
-            --bg-color: #f5f7fa;
-            --card-bg: #ffffff;
-        }
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-            color: #333;
-        }
-        h1 { margin-bottom: 10px; }
-        p { color: #666; margin-bottom: 30px; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --panel-w: 300px; }
+        body { margin: 0; padding: 0; font-family: sans-serif; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
         
-        .container {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
+        /* 左侧控制栏 */
+        .sidebar {
+            width: var(--panel-w); background: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; gap: 15px; z-index: 10; overflow-y: auto;
         }
-
-        .upload-area {
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            padding: 40px;
-            cursor: pointer;
-            transition: 0.3s;
-            position: relative;
-        }
-        .upload-area:hover { border-color: var(--primary-color); background: #f0f7ff; }
+        h2 { margin: 0 0 10px 0; font-size: 18px; color: #333; }
+        .control-group { border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; font-weight: bold; }
+        input[type="number"], button { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .row-col-inputs { display: flex; gap: 10px; }
         
-        #fileInput {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0;
-            cursor: pointer;
+        .btn-primary { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); cursor: pointer; }
+
+        /* 右侧工作区 */
+        .workspace {
+            flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+            background-color: #e5e5e5;
+            background-image: radial-gradient(#ccc 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow: auto;
+            user-select: none;
         }
 
-        .btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: 0.2s;
-            display: none; /* 初始隐藏 */
-        }
-        .btn:hover { background-color: #357abd; }
-        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        /* 图片容器 */
+        #imgContainer { position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.2); line-height: 0; }
+        #sourceImg { max-width: 80vw; max-height: 90vh; display: block; pointer-events: none; }
 
-        #previewInfo {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #555;
-            display: none;
-        }
-
-        /* 预览网格 */
-        .grid-preview {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
-            margin-top: 20px;
-            border: 1px solid #eee;
-            background: #eee;
-            display: none;
-        }
-        .grid-preview img {
-            width: 100%;
-            display: block;
+        /* 裁剪框 (核心组件) */
+        #cropBox {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border: 2px solid rgba(255, 0, 0, 0.8);
+            box-sizing: border-box;
+            cursor: move;
+            /* 内部网格线 */
+            background: linear-gradient(to right, rgba(0,255,255,0.5) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(0,255,255,0.5) 1px, transparent 1px);
+            z-index: 5;
         }
         
-        #status { margin-top: 15px; font-weight: bold; color: var(--primary-color); }
+        /* 裁剪框的拖拽手柄 */
+        .handle {
+            width: 10px; height: 10px; background: white; border: 1px solid #333;
+            position: absolute; z-index: 6;
+        }
+        .nw { top: -6px; left: -6px; cursor: nw-resize; }
+        .ne { top: -6px; right: -6px; cursor: ne-resize; }
+        .sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+        .se { bottom: -6px; right: -6px; cursor: se-resize; }
+
+        /* 遮罩层 (让非选区变暗) */
+        #overlayMask {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); pointer-events: none;
+            clip-path: polygon(0% 0%, 0% 100%, 0 100%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%, 100% 100%, 100% 0%);
+        }
+
+        #statusInfo { font-size: 12px; color: #666; margin-top: 5px; line-height: 1.4; }
     </style>
 </head>
 <body>
 
-    <h1>表情包切图打包工具</h1>
-    <p>专用于 7列 x 4行 (共28张) 网格图片的批量裁剪</p>
-
-    <div class="container">
-        <div class="upload-area">
-            <input type="file" id="fileInput" accept="image/*">
-            <span id="uploadText">点击或拖拽上传图片<br>(推荐分辨率: 1920x1080 或更高)</span>
-        </div>
-
-        <div id="previewInfo"></div>
-        
-        <div class="grid-preview" id="gridPreview"></div>
-
-        <div id="status"></div>
-        <button id="downloadBtn" class="btn">生成并下载 ZIP</button>
+<div class="sidebar">
+    <h2>🧩 表情包网格切图</h2>
+    
+    <div class="control-group">
+        <label>1. 上传图片</label>
+        <input type="file" id="fileInput" accept="image/*">
     </div>
 
-    <script>
-        const fileInput = document.getElementById('fileInput');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const previewInfo = document.getElementById('previewInfo');
-        const gridPreview = document.getElementById('gridPreview');
-        const status = document.getElementById('status');
-        const uploadText = document.getElementById('uploadText');
+    <div class="control-group">
+        <label>2. 设置网格 (列 x 行)</label>
+        <div class="row-col-inputs">
+            <input type="number" id="colsInput" value="7" min="1" placeholder="列">
+            <span style="padding-top:8px">x</span>
+            <input type="number" id="rowsInput" value="4" min="1" placeholder="行">
+        </div>
+        <button class="btn-outline" id="resetBoxBtn" style="margin-top:10px; font-size:12px">重置选区到全图</button>
+    </div>
 
-        let loadedImage = null;
-        // 配置项
-        const COLS = 7;
-        const ROWS = 4;
-        // 如果需要强制输出分辨率比例，可以在这里做逻辑，目前逻辑是均分切割
-        
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+    <div class="control-group">
+        <label>3. 导出选项 (可选)</label>
+        <div style="font-size:12px; margin-bottom:5px;">
+            <input type="checkbox" id="resizeCheck"> 强制调整每个切片大小
+        </div>
+        <div id="resizeOptions" style="display:none; gap:5px;">
+            <input type="number" id="targetW" placeholder="宽 (px)" value="200">
+            <input type="number" id="targetH" placeholder="高 (px)" value="200">
+        </div>
+    </div>
 
-            uploadText.textContent = `已选择: ${file.name}`;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    loadedImage = img;
-                    
-                    // 计算单个切片尺寸
-                    const cellW = Math.floor(img.width / COLS);
-                    const cellH = Math.floor(img.height / ROWS);
-                    const ratio = (cellW / cellH).toFixed(2);
-                    
-                    previewInfo.style.display = 'block';
-                    previewInfo.innerHTML = `
-                        <strong>图片尺寸:</strong> ${img.width} x ${img.height} px<br>
-                        <strong>单张切片:</strong> ${cellW} x ${cellH} px (比例: ${ratio})<br>
-                        <strong>预计产出:</strong> 28 张图片
-                    `;
+    <div class="control-group" style="border:none;">
+        <button id="downloadBtn" class="btn-primary" disabled>裁剪并打包下载</button>
+        <div id="statusInfo">请先上传图片...</div>
+    </div>
+</div>
 
-                    // 显示按钮和简单的网格预览
-                    downloadBtn.style.display = 'inline-block';
-                    generatePreview(img, cellW, cellH);
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
+<div class="workspace" id="workspace">
+    <div id="imgContainer" style="display:none;">
+        <img id="sourceImg" src="">
+        <div id="overlayMask"></div> <div id="cropBox">
+            <div class="handle nw" data-dir="nw"></div>
+            <div class="handle ne" data-dir="ne"></div>
+            <div class="handle sw" data-dir="sw"></div>
+            <div class="handle se" data-dir="se"></div>
+        </div>
+    </div>
+</div>
 
-        // 生成低质量预览（为了不卡顿页面，只显示前7张）
-        function generatePreview(img, cellW, cellH) {
-            gridPreview.style.display = 'grid';
-            gridPreview.innerHTML = '';
-            
-            // 为了性能，只预览第一行
-            for(let c = 0; c < COLS; c++) {
-                const canvas = document.createElement('canvas');
-                canvas.width = cellW;
-                canvas.height = cellH;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, c * cellW, 0, cellW, cellH, 0, 0, cellW, cellH);
+<script>
+    // 元素获取
+    const fileInput = document.getElementById('fileInput');
+    const sourceImg = document.getElementById('sourceImg');
+    const imgContainer = document.getElementById('imgContainer');
+    const cropBox = document.getElementById('cropBox');
+    const overlayMask = document.getElementById('overlayMask');
+    const workspace = document.getElementById('workspace');
+    
+    const colsInput = document.getElementById('colsInput');
+    const rowsInput = document.getElementById('rowsInput');
+    const resetBoxBtn = document.getElementById('resetBoxBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const statusInfo = document.getElementById('statusInfo');
+    
+    const resizeCheck = document.getElementById('resizeCheck');
+    const resizeOptions = document.getElementById('resizeOptions');
+
+    // 状态变量
+    let naturalW = 0, naturalH = 0;
+    let currentScale = 1; // 屏幕显示尺寸 / 原始尺寸
+    let isDragging = false;
+    let isResizing = false;
+    let resizeDir = '';
+    let startX, startY;
+    let startLeft, startTop, startW, startH;
+
+    // 1. 初始化事件监听
+    resizeCheck.addEventListener('change', (e) => {
+        resizeOptions.style.display = e.target.checked ? 'flex' : 'none';
+    });
+
+    colsInput.addEventListener('input', updateGridLines);
+    rowsInput.addEventListener('input', updateGridLines);
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            sourceImg.src = event.target.result;
+            sourceImg.onload = () => {
+                naturalW = sourceImg.naturalWidth;
+                naturalH = sourceImg.naturalHeight;
+                imgContainer.style.display = 'block';
+                downloadBtn.disabled = false;
                 
-                const previewImg = document.createElement('img');
-                previewImg.src = canvas.toDataURL('image/jpeg', 0.5);
-                gridPreview.appendChild(previewImg);
+                // 重置选区
+                resetCropBox();
+                updateStatus();
+            };
+        };
+        reader.readAsDataURL(file);
+    });
+
+    resetBoxBtn.addEventListener('click', resetCropBox);
+
+    function resetCropBox() {
+        if (!naturalW) return;
+        // 这里的 style 设置的是百分比，相对于 imgContainer
+        cropBox.style.left = '0px';
+        cropBox.style.top = '0px';
+        cropBox.style.width = '100%';
+        cropBox.style.height = '100%';
+        updateGridLines();
+        updateMask();
+    }
+
+    // 更新网格线的 CSS
+    function updateGridLines() {
+        const cols = parseInt(colsInput.value) || 1;
+        const rows = parseInt(rowsInput.value) || 1;
+        // 利用 background-size 模拟网格
+        cropBox.style.backgroundSize = `${100/cols}% ${100/rows}%`;
+        updateStatus();
+    }
+
+    function updateStatus() {
+        if(!naturalW) return;
+        // 计算当前选区对应的真实像素大小
+        const rect = getCropRectNatural();
+        const cols = parseInt(colsInput.value) || 1;
+        const rows = parseInt(rowsInput.value) || 1;
+        
+        const cellW = Math.floor(rect.w / cols);
+        const cellH = Math.floor(rect.h / rows);
+        
+        statusInfo.innerHTML = `
+            <strong>原始尺寸:</strong> ${naturalW}x${naturalH}<br>
+            <strong>选区尺寸:</strong> ${Math.round(rect.w)}x${Math.round(rect.h)}<br>
+            <strong>单图尺寸:</strong> ${cellW}x${cellH}<br>
+            拖拽红框调整位置，拖拽四个角调整大小。
+        `;
+    }
+
+    // 2. 核心交互逻辑 (拖拽与缩放)
+    
+    // 鼠标在 cropBox 上按下
+    cropBox.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('handle')) {
+            isResizing = true;
+            resizeDir = e.target.dataset.dir;
+        } else {
+            isDragging = true;
+        }
+        
+        // 记录初始状态
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = cropBox.offsetLeft;
+        startTop = cropBox.offsetTop;
+        startW = cropBox.offsetWidth;
+        startH = cropBox.offsetHeight;
+
+        e.preventDefault(); // 防止选中文字
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging && !isResizing) return;
+
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const containerW = imgContainer.offsetWidth;
+        const containerH = imgContainer.offsetHeight;
+
+        if (isDragging) {
+            let newL = startLeft + dx;
+            let newT = startTop + dy;
+
+            // 边界检查
+            newL = Math.max(0, Math.min(newL, containerW - startW));
+            newT = Math.max(0, Math.min(newT, containerH - startH));
+
+            cropBox.style.left = newL + 'px';
+            cropBox.style.top = newT + 'px';
+            cropBox.style.width = startW + 'px'; // 保持宽高固定
+            cropBox.style.height = startH + 'px';
+        } 
+        else if (isResizing) {
+            let newL = startLeft, newT = startTop, newW = startW, newH = startH;
+
+            // 根据方向计算
+            if (resizeDir.includes('e')) newW = startW + dx;
+            if (resizeDir.includes('s')) newH = startH + dy;
+            if (resizeDir.includes('w')) {
+                newW = startW - dx;
+                newL = startLeft + dx;
+            }
+            if (resizeDir.includes('n')) {
+                newH = startH - dy;
+                newT = startTop + dy;
+            }
+
+            // 最小尺寸限制
+            if (newW < 20) { newW = 20; if(resizeDir.includes('w')) newL = startLeft + startW - 20; }
+            if (newH < 20) { newH = 20; if(resizeDir.includes('n')) newT = startTop + startH - 20; }
+
+            // 简单边界检查 (防止反向拉伸导致坐标错乱)
+            if (newL < 0) { newW += newL; newL = 0; }
+            if (newT < 0) { newH += newT; newT = 0; }
+            if (newL + newW > containerW) newW = containerW - newL;
+            if (newT + newH > containerH) newH = containerH - newT;
+
+            cropBox.style.left = newL + 'px';
+            cropBox.style.top = newT + 'px';
+            cropBox.style.width = newW + 'px';
+            cropBox.style.height = newH + 'px';
+        }
+        
+        updateMask();
+        updateStatus();
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+        isResizing = false;
+    });
+
+    // 更新遮罩层形状 (利用 clip-path)
+    function updateMask() {
+        const l = cropBox.offsetLeft;
+        const t = cropBox.offsetTop;
+        const w = cropBox.offsetWidth;
+        const h = cropBox.offsetHeight;
+        const cw = imgContainer.offsetWidth;
+        const ch = imgContainer.offsetHeight;
+
+        // 生成反向遮罩的 clip-path 是比较麻烦的，这里用简单的 CSS border 模拟？
+        // 或者直接不管遮罩，只高亮选区。
+        // 为了简单有效，我们用 4个 div 拼遮罩，或者 svg，或者更简单的：
+        // 实际上 overlayMask 用 CSS clip-path 最优雅：
+        overlayMask.style.clipPath = `polygon(
+            0% 0%, 0% 100%, ${l}px 100%, ${l}px ${t}px, 
+            ${l+w}px ${t}px, ${l+w}px ${t+h}px, ${l}px ${t+h}px, ${l}px 100%, 
+            100% 100%, 100% 0%
+        )`;
+    }
+
+    // 获取选区在原始图片中的真实坐标
+    function getCropRectNatural() {
+        const cw = imgContainer.offsetWidth;
+        const ch = imgContainer.offsetHeight;
+        // 计算缩放比例 (页面显示大小 / 原始大小)
+        // 注意：object-fit: contain 可能会导致图片实际显示区域小于 img 标签区域，
+        // 但这里我们让 #sourceImg display:block 且 max-width，它是撑开容器的，
+        // 所以 container 的宽高就是图片的显示宽高。
+        const scale = naturalW / cw; // 1个显示像素 = scale 个真实像素
+
+        return {
+            x: cropBox.offsetLeft * scale,
+            y: cropBox.offsetTop * scale,
+            w: cropBox.offsetWidth * scale,
+            h: cropBox.offsetHeight * scale
+        };
+    }
+
+    // 3. 裁剪下载逻辑
+    downloadBtn.addEventListener('click', async () => {
+        statusInfo.textContent = "正在处理...";
+        
+        const zip = new JSZip();
+        const folder = zip.folder("cut_emojis");
+        const cols = parseInt(colsInput.value);
+        const rows = parseInt(rowsInput.value);
+        const rect = getCropRectNatural();
+        
+        // 计算每个格子的真实源宽高
+        const srcCellW = rect.w / cols;
+        const srcCellH = rect.h / rows;
+
+        // 确定输出宽高
+        let destW = srcCellW;
+        let destH = srcCellH;
+
+        if (resizeCheck.checked) {
+            destW = parseInt(document.getElementById('targetW').value);
+            destH = parseInt(document.getElementById('targetH').value);
+        }
+
+        let count = 0;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                count++;
+                const canvas = document.createElement('canvas');
+                canvas.width = destW;
+                canvas.height = destH;
+                const ctx = canvas.getContext('2d');
+
+                // 核心：从源图 (sourceImg) 的 (rect.x + c*w, rect.y + r*h) 处剪切
+                ctx.drawImage(
+                    sourceImg,
+                    rect.x + c * srcCellW, rect.y + r * srcCellH, // 源起点
+                    srcCellW, srcCellH,                           // 源宽高
+                    0, 0,                                         // 目标起点
+                    destW, destH                                  // 目标宽高
+                );
+
+                await new Promise(resolve => {
+                    canvas.toBlob(blob => {
+                        const fname = `emoji_${count.toString().padStart(2, '0')}.png`;
+                        folder.file(fname, blob);
+                        resolve();
+                    }, 'image/png');
+                });
             }
         }
 
-        downloadBtn.addEventListener('click', async function() {
-            if (!loadedImage) return;
-
-            status.textContent = "正在处理中，请稍候...";
-            downloadBtn.disabled = true;
-
-            const zip = new JSZip();
-            const folder = zip.folder("emojis");
-            
-            const cellW = Math.floor(loadedImage.width / COLS);
-            const cellH = Math.floor(loadedImage.height / ROWS);
-
-            let count = 0;
-
-            // 循环切割
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    count++;
-                    const canvas = document.createElement('canvas');
-                    canvas.width = cellW;
-                    canvas.height = cellH;
-                    const ctx = canvas.getContext('2d');
-
-                    // 核心切割逻辑：从源图的指定位置剪切到新 Canvas
-                    ctx.drawImage(
-                        loadedImage, 
-                        c * cellW, r * cellH,  // 源图起点 x, y
-                        cellW, cellH,          // 源图剪切宽高
-                        0, 0,                  // 目标起点 x, y
-                        cellW, cellH           // 目标宽高
-                    );
-
-                    // 转换为 Blob 并添加到 ZIP
-                    // 使用 Promise 等待转换完成
-                    await new Promise(resolve => {
-                        canvas.toBlob(function(blob) {
-                            // 文件名格式: emoji_01.png
-                            const fileName = `emoji_${count.toString().padStart(2, '0')}.png`;
-                            folder.file(fileName, blob);
-                            resolve();
-                        }, 'image/png');
-                    });
-                }
-            }
-
-            status.textContent = "正在打包 ZIP...";
-            
-            // 生成 ZIP 并下载
-            zip.generateAsync({type:"blob"}).then(function(content) {
-                saveAs(content, "emojis_pack.zip");
-                status.textContent = "下载已开始！";
-                downloadBtn.disabled = false;
-                
-                // 3秒后重置状态
-                setTimeout(() => { status.textContent = ""; }, 3000);
-            });
+        zip.generateAsync({type:"blob"}).then(content => {
+            saveAs(content, "custom_emojis.zip");
+            statusInfo.textContent = "打包完成！";
         });
-    </script>
+    });
+
+</script>
 </body>
 </html>
