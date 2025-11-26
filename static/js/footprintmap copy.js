@@ -20,63 +20,7 @@
   const registeredMaps = new Set();
   let themeObserver = null;
   let photoViewer = null;
-  let photoPopupDelegateRegistered = false;
   let suppressMapClose = false;
-
-  // 注入自定义控件的样式
-  const injectStyles = () => {
-    const styleId = 'footprint-map-styles';
-    if (document.getElementById(styleId)) return;
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = `
-      /* 统一的控件容器：包含全屏、重载、放大、缩小 */
-      .footprint-map-ctrls {
-        position: absolute;
-        z-index: 150;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        right: 20px;
-        transition: all 0.3s ease;
-      }
-      
-      /* PC端：停靠在右上角 */
-      .footprint-map-ctrls.is-desktop { top: 20px; }
-      
-      /* 移动端：停靠在右下角 */
-      .footprint-map-ctrls.is-mobile { bottom: 30px; }
-
-      .footprint-ctrl-btn {
-        width: 32px;
-        height: 32px;
-        background: #fff;
-        border-radius: 4px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #555;
-        transition: background 0.2s, color 0.2s;
-        padding: 0;
-      }
-      .footprint-ctrl-btn:hover { background: #f5f5f5; color: #000; }
-      .footprint-ctrl-btn svg { width: 18px; height: 18px; fill: currentColor; }
-      
-      html.dark .footprint-ctrl-btn {
-        background: #282828;
-        color: #ccc;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-      }
-      html.dark .footprint-ctrl-btn:hover { background: #333; color: #fff; }
-
-      .footprint-map.is-fullscreen { background: #fff; }
-      html.dark .footprint-map.is-fullscreen { background: #1a1a1a; }
-    `;
-    document.head.appendChild(style);
-  };
 
   const escapeHtml = str => String(str)
     .replace(/&/g, '&amp;')
@@ -87,41 +31,29 @@
 
   const formatDate = raw => {
     if (!raw) return '';
-    // 原有的日期转换逻辑注释掉
-    // const date = new Date(raw);
-    // return isNaN(date.getTime()) ? String(raw) : dateFormatter.format(date);
-    
-    // 新增：直接返回原始字符串
-    return String(raw);
+    const date = new Date(raw);
+    return isNaN(date.getTime()) ? String(raw) : dateFormatter.format(date);
   };
 
   const getCurrentTheme = () => 
     document.documentElement.classList.contains('dark') ? MAP_STYLES.dark : MAP_STYLES.light;
 
   function init() {
-    injectStyles(); // 初始化时注入样式
     document.querySelectorAll(MAP_SELECTOR).forEach(bootstrapMap);
   }
 
   async function bootstrapMap(container) {
-    const { json: dataUrl, amapKey: apiKey, provider = 'amap' } = container.dataset;
+    const { json: dataUrl, amapKey: apiKey } = container.dataset;
 
     if (!apiKey) {
-      const hint = provider === 'mapbox' ? '<code>data-amap-key</code> / 初始化参数 <code>amapKey</code>（或提供 Mapbox Token）' : '<code>key=你的APIKey</code> 或 <code>data-amap-key</code>';
-      container.innerHTML = `<div class="footprint-map__error">无法加载地图：请在页面中为地图脚本提供 ${hint}。</div>`;
+      container.innerHTML = '<div class="footprint-map__error">无法加载地图：请在页面中为高德脚本提供 <code>key=你的APIKey</code>，或在容器上设置 <code>data-amap-key</code> / 初始化参数 <code>amapKey</code>。</div>';
       return;
     }
 
     container.classList.add('footprint-map--loading');
 
     try {
-      if (provider === 'mapbox') {
-        // 延迟加载 mapbox 适配器脚本（它会提供 window.loadMapboxAdapter / window.renderMapWithMapbox）
-        await ensureMapboxAdapterScript();
-        if (typeof window.loadMapboxAdapter === 'function') await window.loadMapboxAdapter();
-      } else {
-        await loadAmap(apiKey);
-      }
+      await loadAmap(apiKey);
       const locations = await fetchLocations(dataUrl);
 
       if (!locations.length) {
@@ -129,36 +61,12 @@
         return;
       }
 
-      if (provider === 'mapbox' && typeof window.renderMapWithMapbox === 'function') {
-        window.renderMapWithMapbox(container, locations, apiKey);
-      } else {
-        renderMap(container, locations);
-      }
+      renderMap(container, locations);
     } catch (error) {
       container.innerHTML = '<div class="footprint-map__error">足迹地图加载失败，请稍后重试。</div>';
     } finally {
       container.classList.remove('footprint-map--loading');
     }
-  }
-
-  // 动态注入 mapbox-adapter.js
-  let _mapboxAdapterLoader = null;
-  function ensureMapboxAdapterScript() {
-    if (_mapboxAdapterLoader) return _mapboxAdapterLoader;
-    _mapboxAdapterLoader = new Promise((resolve, reject) => {
-      // 尝试查找当前脚本的路径以拼接 adapter 路径
-      const scriptTags = Array.from(document.getElementsByTagName('script'));
-      const selfScript = scriptTags.find(s => s.src && s.src.indexOf('/js/footprintmap.js') !== -1);
-      const base = selfScript ? selfScript.src.replace(/\/[^/]*$/, '') : '';
-      const adapterSrc = base ? (base + '/mapbox-adapter.js') : (window.location.origin + (window.__HUGO_BASEURL__ || '') + '/js/mapbox-adapter.js');
-      const s = document.createElement('script');
-      s.src = adapterSrc;
-      s.async = true;
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error('加载 mapbox-adapter.js 失败'));
-      document.head.appendChild(s);
-    });
-    return _mapboxAdapterLoader;
   }
 
   async function loadAmap(apiKey) {
@@ -171,8 +79,7 @@
       script.async = true;
       script.onload = () => {
         window._AMapSecurityConfig = { securityJsCode: '' };
-        // 注意：这里移除了 AMap.ToolBar，改用自定义控件以解决布局问题
-        AMap.plugin(['AMap.Scale'], resolve);
+        AMap.plugin(['AMap.Scale', 'AMap.ToolBar'], resolve);
       };
       script.onerror = () => reject(new Error('高德地图脚本加载失败'));
       document.head.appendChild(script);
@@ -252,11 +159,9 @@
     mapCanvas.className = 'footprint-map__canvas';
     container.appendChild(mapCanvas);
 
-    const isMobile = window.matchMedia('(max-width: 640px)').matches;
-
-    // 1. 初始化地图
+    // 初始化地图，默认中心点设为第一个数据点，但随后会被 fitViewToPoints 覆盖
     const map = new AMap.Map(mapCanvas, {
-      zoom: 4, 
+      zoom: 4,
       center: [locations[0].lng, locations[0].lat],
       mapStyle: getCurrentTheme(),
       viewMode: '2D',
@@ -264,101 +169,39 @@
       pitchEnable: false
     });
 
-    let markerData = locations;
-
-    // 2. 定义通用视野自适应函数
+    // 1. 定义一个通用函数：根据传入的数据点，自动调整地图视野
+    // ---------------------------------------------------------
     const fitViewToPoints = (points) => {
       if (!points || points.length === 0) return;
+
+      // 情况A：只有一个点，直接定位，避免缩放过大
       if (points.length === 1) {
         map.setZoomAndCenter(10, [points[0].lng, points[0].lat]);
         return;
       }
+
+      // 情况B：多个点，建立隐形折线来计算边界
+      // 这样可以忽略“集群图标”的影响，只根据实际物理坐标来缩放
       const path = points.map(p => [p.lng, p.lat]);
       const hiddenBounds = new AMap.Polyline({ 
         path: path, 
-        strokeOpacity: 0, 
-        bubble: true,     
-        map: map          
+        strokeOpacity: 0, // 完全透明
+        bubble: true,     // 避免干扰点击事件
+        map: map          // 必须add到地图上才能计算
       });
-      // 设置视野：上右下左留出 60-80px 的边距
+      
+      // 设置视野：上右下左留出 60-80px 的边距，让点不要贴在屏幕边缘
       map.setFitView([hiddenBounds], false, [60, 80, 60, 80]);
+      
+      // 用完即焚
       map.remove(hiddenBounds);
     };
 
-    // 渲染统一的控制栏 (全屏 + 重载 + 放大 + 缩小) - 替代原有的 ToolBar
-    // ----------------------------------------------------
-    const renderControls = () => {
-      const wrapper = document.createElement('div');
-      wrapper.className = `footprint-map-ctrls ${isMobile ? 'is-mobile' : 'is-desktop'}`;
-      
-      const icons = {
-        full: '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
-        exitFull: '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
-        reload: '<svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>',
-        plus: '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>',
-        minus: '<svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>'
-      };
-
-      // 1. 全屏按钮
-      const btnFull = document.createElement('button');
-      btnFull.className = 'footprint-ctrl-btn';
-      btnFull.title = '全屏显示';
-      btnFull.innerHTML = icons.full;
-      btnFull.onclick = function() {
-        this.blur(); // 关键修复：失去焦点，防止页面乱跳
-        if (!document.fullscreenElement) {
-          container.requestFullscreen().catch(console.error);
-        } else {
-          document.exitFullscreen();
-        }
-      };
-
-      document.addEventListener('fullscreenchange', () => {
-        const isFull = document.fullscreenElement === container;
-        container.classList.toggle('is-fullscreen', isFull);
-        btnFull.innerHTML = isFull ? icons.exitFull : icons.full;
-        btnFull.title = isFull ? '退出全屏' : '全屏显示';
-      });
-
-      // 2. 重载视图按钮
-      const btnReload = document.createElement('button');
-      btnReload.className = 'footprint-ctrl-btn';
-      btnReload.title = '重置视野';
-      btnReload.innerHTML = icons.reload;
-      btnReload.onclick = function() {
-        this.blur(); // 关键修复：失去焦点
-        fitViewToPoints(markerData);
-      };
-
-      // 3. 放大按钮
-      const btnZoomIn = document.createElement('button');
-      btnZoomIn.className = 'footprint-ctrl-btn';
-      btnZoomIn.title = '放大';
-      btnZoomIn.innerHTML = icons.plus;
-      btnZoomIn.onclick = function() {
-        this.blur(); // 关键修复：失去焦点
-        map.zoomIn();
-      };
-
-      // 4. 缩小按钮
-      const btnZoomOut = document.createElement('button');
-      btnZoomOut.className = 'footprint-ctrl-btn';
-      btnZoomOut.title = '缩小';
-      btnZoomOut.innerHTML = icons.minus;
-      btnZoomOut.onclick = function() {
-        this.blur(); // 关键修复：失去焦点
-        map.zoomOut();
-      };
-
-      wrapper.append(btnFull, btnReload, btnZoomIn, btnZoomOut);
-      container.appendChild(wrapper);
-    };
-
-    renderControls();
-
-    map.plugin(['AMap.Scale'], () => {
-      // 比例尺放在左下角，避免与右下角的控件冲突
-      const scalePos = { bottom: '25px', left: '20px' };
+    map.plugin(['AMap.Scale', 'AMap.ToolBar'], () => {
+      const isMobile = window.matchMedia('(max-width: 640px)').matches;
+      const toolbarPos = isMobile ? { bottom: '20px', right: '20px' } : { top: '20px', right: '20px' };
+      const scalePos = isMobile ? { bottom: '20px', left: '20px' } : { bottom: '20px', right: '20px' };
+      map.addControl(new AMap.ToolBar({ position: toolbarPos }));
       map.addControl(new AMap.Scale({ position: scalePos }));
     });
 
@@ -371,34 +214,13 @@
       infoWindow.open(map, [point.lng, point.lat]);
       setTimeout(() => {
         setupPopupEvents();
-        try { ensureInfoWindowVisible_AMap(map, [point.lng, point.lat]); } catch (err) { /* ignore */ }
         suppressMapClose = false;
       }, 0);
     };
 
-    function ensureInfoWindowVisible_AMap(mapInstance, lnglat) {
-        try {
-          if (!mapInstance || !mapInstance.lngLatToContainer || !mapInstance.containerToLngLat || !mapInstance.getSize) {
-            try { mapInstance.setCenter(lnglat); } catch (e) { /* best-effort */ }
-            return;
-          }
-          const pixel = mapInstance.lngLatToContainer(lnglat);
-          const size = mapInstance.getSize();
-          const desiredX = Math.floor(size.width / 2);
-          const desiredY = Math.floor(size.height * 0.70);
-          const dx = pixel.x - desiredX;
-          const dy = pixel.y - desiredY;
-          if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-          const centerPixel = { x: Math.floor(size.width / 2 + dx), y: Math.floor(size.height / 2 + dy) };
-          const newCenter = mapInstance.containerToLngLat([centerPixel.x, centerPixel.y]);
-          if (newCenter && newCenter.lng !== undefined) {
-            try { mapInstance.setCenter(newCenter); } catch (e) { /* best-effort */ }
-          }
-        } catch (e) { /* ignore */ }
-    }
-
     let allMarkers = [];
     let clusterMarkers = [];
+    let markerData = locations;
     let clusterEnabled = true;
 
     function updateClusters() {
@@ -475,10 +297,11 @@
 
     const categories = [...new Set(locations.flatMap(l => l.categories))].filter(Boolean).sort();
     
-    // 3. 筛选逻辑：使用新的 fitViewToPoints
+    // 2. 渲染筛选按钮
     if (categories.length > 1) {
       renderFilters(container, categories, (cat) => {
         infoWindow.close();
+        // 更新当前数据源
         markerData = cat === FILTER_ALL ? locations : locations.filter(l => l.categories.includes(cat));
         updateClusters();
         // 关键点：切换标签时，调用通用函数适应视野
@@ -489,11 +312,14 @@
     renderClusterToggle(container, (enabled) => {
       clusterEnabled = enabled;
       updateClusters();
+      // 如果希望在切换“集群模式”开关时也重新调整视野，可以取消下面这行的注释
+      // fitViewToPoints(markerData); 
     });
 
     registerThemeSync(map);
 
-    // 4. 初始加载完成时，立刻适应所有点的视野
+    // 3. 页面初始化完成时，直接调用一次，适应“全部”数据
+    // 这样无论初始数据是否被聚合，地图都会缩放到包含所有点的状态
     fitViewToPoints(locations);
   }
 
@@ -537,61 +363,58 @@
     return parts.join('');
   }
 
-  // 导出给 Mapbox adapter 或其它外部脚本复用
-  if (window.FootprintMap) {
-    try {
-      window.FootprintMap._buildInfoWindow = buildInfoWindow;
-      window.FootprintMap._escapeHtml = escapeHtml;
-    } catch (e) {}
-  }
-
   function setupPopupEvents() {
-    // 使用事件委托一次性处理 popup 内的图片点击与轮播按钮
-    if (!photoPopupDelegateRegistered) {
-      document.addEventListener('click', (e) => {
-        // 轮播左右按钮（委托）
-        const btn = e.target.closest('.footprint-popup__photos-btn');
-        if (btn && btn.closest('.footprint-popup')) {
-          e.stopPropagation();
-          const carousel = btn.closest('.footprint-popup__photos');
-          if (!carousel) return;
-          const track = carousel.querySelector('.footprint-popup__track');
-          if (!track) return;
-          const dir = btn.classList.contains('footprint-popup__photos-btn--next') ? 1 : -1;
-          const slides = Array.from(track.querySelectorAll('.footprint-popup__slide'));
-          if (!slides.length) return;
-          const current = Math.round(track.scrollLeft);
-          let targetLeft = null;
-          if (dir > 0) {
-            const next = slides.find(s => Math.round(s.offsetLeft) > current + 5);
-            targetLeft = next ? next.offsetLeft : track.scrollWidth - track.clientWidth;
-          } else {
-            const prev = slides.slice().reverse().find(s => Math.round(s.offsetLeft) < current - 5);
-            targetLeft = prev ? prev.offsetLeft : 0;
-          }
-          targetLeft = Math.max(0, Math.min(targetLeft, track.scrollWidth - track.clientWidth));
-          track.scrollTo({ left: Math.floor(targetLeft), behavior: 'smooth' });
-          return;
-        }
-
-        // 图片点击（委托）
-        const img = e.target.closest('.footprint-popup__slide img');
-        if (img && img.closest('.footprint-popup')) {
-          e.preventDefault();
-          e.stopPropagation();
-          const popup = img.closest('.footprint-popup');
-          const slides = Array.from(popup.querySelectorAll('.footprint-popup__slide img'));
-          const images = slides.map(s => s.src);
-          const idx = slides.indexOf(img);
-          openPhotoViewer(images, idx, img.alt);
-        }
-      }, true);
-      photoPopupDelegateRegistered = true;
-    }
-
     requestAnimationFrame(() => {
       const popup = document.querySelector('.footprint-popup');
       if (!popup) return;
+
+      const carousel = popup.querySelector('.footprint-popup__photos[data-carousel]');
+      if (carousel) {
+        const track = carousel.querySelector('.footprint-popup__track');
+        carousel.querySelectorAll('.footprint-popup__photos-btn').forEach(btn => {
+          btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const dir = btn.classList.contains('footprint-popup__photos-btn--next') ? 1 : -1;
+            // 更精确的滚动：根据子幻灯片位置计算下一张/上一张的 offsetLeft，避免固定距离在移动端导致多余空白
+            const slides = Array.from(track.querySelectorAll('.footprint-popup__slide'));
+            if (!slides.length) return;
+            const current = Math.round(track.scrollLeft);
+            let targetLeft = null;
+            if (dir > 0) {
+              // 找到第一个左偏移大于当前滚动位置的幻灯片
+              const next = slides.find(s => Math.round(s.offsetLeft) > current + 5);
+              if (next) {
+                targetLeft = next.offsetLeft;
+              } else {
+                // 到末尾
+                targetLeft = track.scrollWidth - track.clientWidth;
+              }
+            } else {
+              // 向前：找到最后一个左偏移小于当前滚动位置的幻灯片
+              const prev = slides.slice().reverse().find(s => Math.round(s.offsetLeft) < current - 5);
+              if (prev) {
+                targetLeft = prev.offsetLeft;
+              } else {
+                targetLeft = 0;
+              }
+            }
+            if (targetLeft === null) return;
+            // 将目标限定在合理范围内
+            targetLeft = Math.max(0, Math.min(targetLeft, track.scrollWidth - track.clientWidth));
+            track.scrollTo({ left: Math.floor(targetLeft), behavior: 'smooth' });
+          });
+        });
+      }
+
+      popup.querySelectorAll('.footprint-popup__photos img').forEach(img => {
+        if (img.dataset.bound) return;
+        img.dataset.bound = '1';
+        img.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          openPhotoViewer(img.src, img.alt);
+        });
+      });
     });
   }
 
@@ -666,24 +489,7 @@
     container.appendChild(wrapper);
   }
 
-  // viewerState 保存当前查看器的图片数组与索引
-  const viewerState = { images: [], index: 0 };
-
-  function openPhotoViewer(imagesOrSrc, indexOrAlt, maybeAlt) {
-    // 向后兼容：如果传入的是单个 src 字符串
-    let images = [];
-    let idx = 0;
-    let alt = '';
-    if (Array.isArray(imagesOrSrc)) {
-      images = imagesOrSrc;
-      idx = typeof indexOrAlt === 'number' ? indexOrAlt : 0;
-      alt = maybeAlt || '';
-    } else {
-      images = [imagesOrSrc];
-      idx = 0;
-      alt = indexOrAlt || '';
-    }
-
+  function openPhotoViewer(src, alt) {
     if (!photoViewer) {
       photoViewer = document.createElement('div');
       photoViewer.className = 'footprint-photo-viewer';
@@ -691,17 +497,9 @@
         <div class="footprint-photo-viewer__mask"></div>
         <div class="footprint-photo-viewer__dialog">
           <button type="button" class="footprint-photo-viewer__close">&times;</button>
-          <button type="button" class="footprint-photo-viewer__prev" aria-label="上一张">&#10094;</button>
           <img alt="" />
-          <button type="button" class="footprint-photo-viewer__next" aria-label="下一张">&#10095;</button>
         </div>`;
       document.body.appendChild(photoViewer);
-
-      // 缓存常用节点，减少后续查询
-      const imgEl = photoViewer.querySelector('img');
-      const prevBtn = photoViewer.querySelector('.footprint-photo-viewer__prev');
-      const nextBtn = photoViewer.querySelector('.footprint-photo-viewer__next');
-      photoViewer._els = { img: imgEl, prevBtn, nextBtn };
 
       const close = () => {
         photoViewer.classList.remove('is-visible');
@@ -709,56 +507,18 @@
       };
 
       photoViewer.addEventListener('click', e => {
-        if (e.target === photoViewer || e.target.classList.contains('footprint-photo-viewer__mask') ||
+        if (e.target === photoViewer || e.target.classList.contains('footprint-photo-viewer__mask') || 
             e.target.classList.contains('footprint-photo-viewer__close')) close();
       });
 
-      // 渲染与切换函数
-      function render() {
-        const img = photoViewer._els.img;
-        img.src = viewerState.images[viewerState.index] || '';
-        img.alt = alt || '';
-        if (viewerState.images.length <= 1) {
-          photoViewer._els.prevBtn.style.display = 'none';
-          photoViewer._els.nextBtn.style.display = 'none';
-        } else {
-          photoViewer._els.prevBtn.style.display = '';
-          photoViewer._els.nextBtn.style.display = '';
-        }
-      }
-
-      function showPrev() {
-        if (viewerState.images.length <= 1) return;
-        viewerState.index = (viewerState.index - 1 + viewerState.images.length) % viewerState.images.length;
-        render();
-      }
-
-      function showNext() {
-        if (viewerState.images.length <= 1) return;
-        viewerState.index = (viewerState.index + 1) % viewerState.images.length;
-        render();
-      }
-
-      // 键盘支持
       document.addEventListener('keydown', e => {
-        if (!photoViewer.classList.contains('is-visible')) return;
-        if (e.key === 'Escape') return close();
-        if (e.key === 'ArrowLeft') showPrev();
-        if (e.key === 'ArrowRight') showNext();
+        if (e.key === 'Escape' && photoViewer.classList.contains('is-visible')) close();
       });
-
-      // 按钮事件
-      prevBtn.addEventListener('click', e => { e.stopPropagation(); showPrev(); });
-      nextBtn.addEventListener('click', e => { e.stopPropagation(); showNext(); });
-      photoViewer._render = render;
-      photoViewer._showPrev = showPrev;
-      photoViewer._showNext = showNext;
     }
 
-    // 初始化状态并显示
-    viewerState.images = images;
-    viewerState.index = Math.max(0, Math.min(idx, images.length - 1));
-    if (photoViewer && photoViewer._render) photoViewer._render();
+    const img = photoViewer.querySelector('img');
+    img.src = src;
+    img.alt = alt || '';
     photoViewer.classList.add('is-visible');
     document.documentElement.classList.add('footprint-photo-viewer-open');
   }
@@ -779,12 +539,9 @@
 
   document.addEventListener('DOMContentLoaded', init);
   
-  // 暴露 API
+  // 暴露 API 供外部调用
   window.FootprintMap = {
     init: init,
-    bootstrapMap: bootstrapMap,
-    _renderFilters: renderFilters,
-    _renderClusterToggle: renderClusterToggle,
-    _onPopupReady: setupPopupEvents
+    bootstrapMap: bootstrapMap
   };
 })();
