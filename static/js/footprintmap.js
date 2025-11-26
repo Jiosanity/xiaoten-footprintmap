@@ -72,7 +72,18 @@
       }
       html.dark .footprint-ctrl-btn:hover { background: #333; color: #fff; }
 
-      .footprint-map.is-fullscreen { background: #fff; }
+      /* 全屏兼容样式 (Fallback for iOS) */
+      .footprint-map.is-fullscreen {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 99999 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        background: #fff;
+      }
       html.dark .footprint-map.is-fullscreen { background: #1a1a1a; }
     `;
     document.head.appendChild(style);
@@ -299,25 +310,56 @@
         minus: '<svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>'
       };
 
-      // 1. 全屏按钮
+      // 1. 全屏按钮 (含 iOS/Fallback 逻辑)
       const btnFull = document.createElement('button');
       btnFull.className = 'footprint-ctrl-btn';
       btnFull.title = '全屏显示';
       btnFull.innerHTML = icons.full;
+      
       btnFull.onclick = function() {
-        this.blur(); // 关键修复：失去焦点，防止页面乱跳
-        if (!document.fullscreenElement) {
-          container.requestFullscreen().catch(console.error);
+        this.blur(); // 失去焦点防止页面跳动
+
+        // 辅助函数：切换 CSS 伪全屏状态 (针对 iOS/Safari)
+        const togglePseudoFullscreen = () => {
+          const isNowFull = container.classList.toggle('is-fullscreen');
+          btnFull.innerHTML = isNowFull ? icons.exitFull : icons.full;
+          btnFull.title = isNowFull ? '退出全屏' : '全屏显示';
+          // 关键：通知地图重绘
+          setTimeout(() => map.resize(), 100);
+        };
+
+        // 优先尝试标准 API
+        if (container.requestFullscreen) {
+          if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(err => {
+              console.warn('Fullscreen API failed, falling back to CSS mode', err);
+              togglePseudoFullscreen();
+            });
+          } else {
+            document.exitFullscreen();
+          }
         } else {
-          document.exitFullscreen();
+          // iOS Safari 或不支持 API 的浏览器
+          togglePseudoFullscreen();
         }
       };
 
+      // 监听原生全屏事件 (确保状态同步)
       document.addEventListener('fullscreenchange', () => {
         const isFull = document.fullscreenElement === container;
-        container.classList.toggle('is-fullscreen', isFull);
-        btnFull.innerHTML = isFull ? icons.exitFull : icons.full;
-        btnFull.title = isFull ? '退出全屏' : '全屏显示';
+        if (isFull) {
+            container.classList.add('is-fullscreen');
+            btnFull.innerHTML = icons.exitFull;
+            btnFull.title = '退出全屏';
+        } else {
+            // 只有在支持 API 的环境下才自动移除 class，避免干扰伪全屏模式
+            if (container.requestFullscreen) {
+                container.classList.remove('is-fullscreen');
+                btnFull.innerHTML = icons.full;
+                btnFull.title = '全屏显示';
+                setTimeout(() => map.resize(), 100);
+            }
+        }
       });
 
       // 2. 重载视图按钮
