@@ -3,218 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>表情包 7x4 切割工具</title>
+    <title>7x4 表情包切图工具 (16:9)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px;
+            padding: 40px 20px;
             color: #333;
         }
+        h1 { margin-bottom: 10px; }
+        p { color: #666; margin-bottom: 30px; }
+        
         .container {
-            background: white;
+            background: var(--card-bg);
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            max-width: 600px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             width: 100%;
+            max-width: 600px;
             text-align: center;
         }
-        h1 { margin-bottom: 20px; font-size: 24px; }
-        
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        
-        .input-group label {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        .input-group input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
 
-        /* 文件上传区域样式 */
         .upload-area {
-            border: 2px dashed #cbd5e1;
-            padding: 30px;
+            border: 2px dashed #ddd;
             border-radius: 8px;
+            padding: 40px;
             cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 20px;
+            transition: 0.3s;
+            position: relative;
         }
-        .upload-area:hover { border-color: #3b82f6; background-color: #eff6ff; }
+        .upload-area:hover { border-color: var(--primary-color); background: #f0f7ff; }
         
-        #preview-container {
-            margin-top: 20px;
-            max-width: 100%;
-            overflow: hidden;
-            border: 1px solid #eee;
-            display: none; /* 默认隐藏 */
-        }
-        #preview-img {
-            max-width: 100%;
-            display: block;
+        #fileInput {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
         }
 
         .btn {
-            background-color: #3b82f6;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
+            padding: 12px 30px;
             font-size: 16px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.2s;
-            width: 100%;
-            font-weight: bold;
+            margin-top: 20px;
+            transition: 0.2s;
+            display: none; /* 初始隐藏 */
         }
-        .btn:hover { background-color: #2563eb; }
-        .btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .btn:hover { background-color: #357abd; }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        .status { margin-top: 15px; font-size: 14px; color: #666; height: 20px;}
+        #previewInfo {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+            display: none;
+        }
+
+        /* 预览网格 */
+        .grid-preview {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-top: 20px;
+            border: 1px solid #eee;
+            background: #eee;
+            display: none;
+        }
+        .grid-preview img {
+            width: 100%;
+            display: block;
+        }
+        
+        #status { margin-top: 15px; font-weight: bold; color: var(--primary-color); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>✂️ 表情包切片工具</h1>
-    
-    <div class="controls">
-        <div class="input-group">
-            <label>列数 (横向)</label>
-            <input type="number" id="cols" value="7">
+    <h1>表情包切图打包工具</h1>
+    <p>专用于 7列 x 4行 (共28张) 网格图片的批量裁剪</p>
+
+    <div class="container">
+        <div class="upload-area">
+            <input type="file" id="fileInput" accept="image/*">
+            <span id="uploadText">点击或拖拽上传图片<br>(推荐分辨率: 1920x1080 或更高)</span>
         </div>
-        <div class="input-group">
-            <label>行数 (纵向)</label>
-            <input type="number" id="rows" value="4">
-        </div>
+
+        <div id="previewInfo"></div>
+        
+        <div class="grid-preview" id="gridPreview"></div>
+
+        <div id="status"></div>
+        <button id="downloadBtn" class="btn">生成并下载 ZIP</button>
     </div>
 
-    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-        <p>点击选择图片 或 拖拽图片到这里</p>
-        <input type="file" id="fileInput" accept="image/*" style="display: none" onchange="handleFileSelect(this)">
-    </div>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const previewInfo = document.getElementById('previewInfo');
+        const gridPreview = document.getElementById('gridPreview');
+        const status = document.getElementById('status');
+        const uploadText = document.getElementById('uploadText');
 
-    <div id="preview-container">
-        <p style="font-size:12px; color:#999; margin:5px 0;">预览图：</p>
-        <img id="preview-img" src="" alt="预览">
-    </div>
+        let loadedImage = null;
+        // 配置项
+        const COLS = 7;
+        const ROWS = 4;
+        // 如果需要强制输出分辨率比例，可以在这里做逻辑，目前逻辑是均分切割
+        
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-    <div class="status" id="status-text"></div>
-    <button class="btn" id="downloadBtn" onclick="processAndDownload()" disabled>生成并下载 ZIP</button>
-</div>
-
-<script>
-    let uploadedImage = null;
-    const statusText = document.getElementById('status-text');
-    const downloadBtn = document.getElementById('downloadBtn');
-
-    // 1. 处理文件选择
-    function handleFileSelect(input) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
+            uploadText.textContent = `已选择: ${file.name}`;
+            
             const reader = new FileReader();
-
-            reader.onload = function(e) {
+            reader.onload = function(event) {
                 const img = new Image();
                 img.onload = function() {
-                    uploadedImage = img;
-                    // 显示预览
-                    const previewImg = document.getElementById('preview-img');
-                    previewImg.src = e.target.result;
-                    document.getElementById('preview-container').style.display = 'block';
+                    loadedImage = img;
                     
-                    // 启用下载按钮
-                    downloadBtn.disabled = false;
-                    downloadBtn.innerText = "生成并下载 ZIP";
-                    statusText.innerText = `图片已加载: ${img.width}x${img.height}px`;
+                    // 计算单个切片尺寸
+                    const cellW = Math.floor(img.width / COLS);
+                    const cellH = Math.floor(img.height / ROWS);
+                    const ratio = (cellW / cellH).toFixed(2);
+                    
+                    previewInfo.style.display = 'block';
+                    previewInfo.innerHTML = `
+                        <strong>图片尺寸:</strong> ${img.width} x ${img.height} px<br>
+                        <strong>单张切片:</strong> ${cellW} x ${cellH} px (比例: ${ratio})<br>
+                        <strong>预计产出:</strong> 28 张图片
+                    `;
+
+                    // 显示按钮和简单的网格预览
+                    downloadBtn.style.display = 'inline-block';
+                    generatePreview(img, cellW, cellH);
                 };
-                img.src = e.target.result;
-            }
+                img.src = event.target.result;
+            };
             reader.readAsDataURL(file);
-        }
-    }
+        });
 
-    // 2. 核心处理逻辑
-    async function processAndDownload() {
-        if (!uploadedImage) return;
-
-        downloadBtn.disabled = true;
-        downloadBtn.innerText = "处理中...";
-        statusText.innerText = "正在裁剪...";
-
-        const cols = parseInt(document.getElementById('cols').value);
-        const rows = parseInt(document.getElementById('rows').value);
-        
-        // 计算每个小图的尺寸
-        const itemWidth = Math.floor(uploadedImage.width / cols);
-        const itemHeight = Math.floor(uploadedImage.height / rows);
-
-        const zip = new JSZip();
-        const folder = zip.folder("stickers");
-
-        let count = 0;
-        const total = cols * rows;
-
-        // 循环裁剪
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; x++) {
-                // 创建临时的 Canvas
+        // 生成低质量预览（为了不卡顿页面，只显示前7张）
+        function generatePreview(img, cellW, cellH) {
+            gridPreview.style.display = 'grid';
+            gridPreview.innerHTML = '';
+            
+            // 为了性能，只预览第一行
+            for(let c = 0; c < COLS; c++) {
                 const canvas = document.createElement('canvas');
-                canvas.width = itemWidth;
-                canvas.height = itemHeight;
+                canvas.width = cellW;
+                canvas.height = cellH;
                 const ctx = canvas.getContext('2d');
-
-                // drawImage(image, sourceX, sourceY, sourceW, sourceH, destX, destY, destW, destH)
-                ctx.drawImage(
-                    uploadedImage, 
-                    x * itemWidth, y * itemHeight, // 来源位置
-                    itemWidth, itemHeight,         // 来源尺寸
-                    0, 0,                          // 目标位置
-                    itemWidth, itemHeight          // 目标尺寸
-                );
-
-                // 转换为 Blob 数据
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                ctx.drawImage(img, c * cellW, 0, cellW, cellH, 0, 0, cellW, cellH);
                 
-                // 添加到 ZIP，文件名格式: sticker_01.png
-                const fileName = `sticker_${(count + 1).toString().padStart(2, '0')}.png`;
-                folder.file(fileName, blob);
-                count++;
+                const previewImg = document.createElement('img');
+                previewImg.src = canvas.toDataURL('image/jpeg', 0.5);
+                gridPreview.appendChild(previewImg);
             }
         }
 
-        statusText.innerText = "正在打包...";
-        
-        // 生成 ZIP 并触发下载
-        zip.generateAsync({type:"blob"}).then(function(content) {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(content);
-            link.download = "emojis_7x4.zip";
-            link.click();
-            
-            downloadBtn.disabled = false;
-            downloadBtn.innerText = "生成并下载 ZIP";
-            statusText.innerText = "下载已开始！";
-        });
-    }
-</script>
+        downloadBtn.addEventListener('click', async function() {
+            if (!loadedImage) return;
 
+            status.textContent = "正在处理中，请稍候...";
+            downloadBtn.disabled = true;
+
+            const zip = new JSZip();
+            const folder = zip.folder("emojis");
+            
+            const cellW = Math.floor(loadedImage.width / COLS);
+            const cellH = Math.floor(loadedImage.height / ROWS);
+
+            let count = 0;
+
+            // 循环切割
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    count++;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = cellW;
+                    canvas.height = cellH;
+                    const ctx = canvas.getContext('2d');
+
+                    // 核心切割逻辑：从源图的指定位置剪切到新 Canvas
+                    ctx.drawImage(
+                        loadedImage, 
+                        c * cellW, r * cellH,  // 源图起点 x, y
+                        cellW, cellH,          // 源图剪切宽高
+                        0, 0,                  // 目标起点 x, y
+                        cellW, cellH           // 目标宽高
+                    );
+
+                    // 转换为 Blob 并添加到 ZIP
+                    // 使用 Promise 等待转换完成
+                    await new Promise(resolve => {
+                        canvas.toBlob(function(blob) {
+                            // 文件名格式: emoji_01.png
+                            const fileName = `emoji_${count.toString().padStart(2, '0')}.png`;
+                            folder.file(fileName, blob);
+                            resolve();
+                        }, 'image/png');
+                    });
+                }
+            }
+
+            status.textContent = "正在打包 ZIP...";
+            
+            // 生成 ZIP 并下载
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                saveAs(content, "emojis_pack.zip");
+                status.textContent = "下载已开始！";
+                downloadBtn.disabled = false;
+                
+                // 3秒后重置状态
+                setTimeout(() => { status.textContent = ""; }, 3000);
+            });
+        });
+    </script>
 </body>
 </html>
