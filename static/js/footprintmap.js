@@ -712,7 +712,7 @@
   const viewerState = { images: [], index: 0 };
 
   function openPhotoViewer(imagesOrSrc, indexOrAlt, maybeAlt) {
-    // 向后兼容：如果传入的是单个 src 字符串
+    // 参数兼容处理
     let images = [];
     let idx = 0;
     let alt = '';
@@ -726,6 +726,7 @@
       alt = indexOrAlt || '';
     }
 
+    // 1. 创建 DOM (如果不存在)
     if (!photoViewer) {
       photoViewer = document.createElement('div');
       photoViewer.className = 'footprint-photo-viewer';
@@ -737,9 +738,9 @@
           <img alt="" />
           <button type="button" class="footprint-photo-viewer__next" aria-label="下一张">&#10095;</button>
         </div>`;
-      document.body.appendChild(photoViewer);
-
-      // 缓存常用节点，减少后续查询
+      
+      // 注意：这里先不 appendChild，后面统一处理
+      
       const imgEl = photoViewer.querySelector('img');
       const prevBtn = photoViewer.querySelector('.footprint-photo-viewer__prev');
       const nextBtn = photoViewer.querySelector('.footprint-photo-viewer__next');
@@ -748,6 +749,10 @@
       const close = () => {
         photoViewer.classList.remove('is-visible');
         document.documentElement.classList.remove('footprint-photo-viewer-open');
+        // 关闭时，如果不处于全屏模式，建议把 viewer 归还给 body，避免层级混乱
+        if (!document.fullscreenElement && photoViewer.parentElement !== document.body) {
+           document.body.appendChild(photoViewer);
+        }
       };
 
       photoViewer.addEventListener('click', e => {
@@ -755,7 +760,6 @@
             e.target.classList.contains('footprint-photo-viewer__close')) close();
       });
 
-      // 渲染与切换函数
       function render() {
         const img = photoViewer._els.img;
         img.src = viewerState.images[viewerState.index] || '';
@@ -781,7 +785,6 @@
         render();
       }
 
-      // 键盘支持
       document.addEventListener('keydown', e => {
         if (!photoViewer.classList.contains('is-visible')) return;
         if (e.key === 'Escape') return close();
@@ -789,18 +792,27 @@
         if (e.key === 'ArrowRight') showNext();
       });
 
-      // 按钮事件
       prevBtn.addEventListener('click', e => { e.stopPropagation(); showPrev(); });
       nextBtn.addEventListener('click', e => { e.stopPropagation(); showNext(); });
+      
       photoViewer._render = render;
       photoViewer._showPrev = showPrev;
       photoViewer._showNext = showNext;
     }
 
-    // 初始化状态并显示
+    // 2. 关键修复：动态挂载 DOM
+    // 如果当前有原生全屏元素（电脑端），必须把 viewer 挂载到全屏元素内部才能看见
+    // 如果是 iOS 伪全屏或普通模式，挂载到 body 即可
+    const targetParent = document.fullscreenElement || document.body;
+    if (photoViewer.parentElement !== targetParent) {
+        targetParent.appendChild(photoViewer);
+    }
+
+    // 3. 更新数据并显示
     viewerState.images = images;
     viewerState.index = Math.max(0, Math.min(idx, images.length - 1));
-    if (photoViewer && photoViewer._render) photoViewer._render();
+    if (photoViewer._render) photoViewer._render();
+    
     photoViewer.classList.add('is-visible');
     document.documentElement.classList.add('footprint-photo-viewer-open');
   }
