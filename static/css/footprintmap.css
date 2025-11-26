@@ -1,11 +1,52 @@
 /**
  * xiaoten-footprintmap - Footprint Map Styles
- * Version: 1.2.0
- * License: MIT
- * Description: Styles for Hugo footprint map shortcode with AMap integration
+ * Integrated with site custom styles and custom controls
  */
 
-/* Map Container */
+/* ==========================================================================
+   AMap Overrides (Reset default info window styles)
+   ========================================================================== */
+.amap-info-content,
+.amap-info-outer,
+.amap-info-inner {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.amap-info-sharp,
+.amap-info-shadow {
+    display: none !important;
+}
+
+/* Hide AMap Logo & Copyright */
+.amap-logo,
+.amap-copyright {
+    display: none !important;
+}
+
+/* Hide Default Mapbox Elements (if used) */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib,
+.mapboxgl-ctrl-bottom-left .mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Remove Scale Control Background */
+.amap-scale-text,
+.amap-scalecontrol {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ==========================================================================
+   Map Container
+   ========================================================================== */
 .footprint-map {
     width: 100%;
     min-height: 420px;
@@ -14,10 +55,19 @@
     margin: 1.5rem 0;
     border: 1px solid rgba(0, 0, 0, 0.05);
     position: relative;
+    /* Fix for full screen background issue */
+    background: #fff;
 }
 
 .dark .footprint-map {
     border-color: rgba(255, 255, 255, 0.1);
+    background: #1a1a1a;
+}
+
+.footprint-map.is-fullscreen {
+    border-radius: 0;
+    margin: 0;
+    z-index: 9999;
 }
 
 /* Loading & Error States */
@@ -51,7 +101,70 @@
     display: none;
 }
 
-/* Markers */
+/* ==========================================================================
+   Custom Controls (Fullscreen, Reload, Zoom) - New Added
+   ========================================================================== */
+.footprint-map-ctrls {
+    position: absolute;
+    z-index: 150;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    right: 20px;
+    transition: all 0.3s ease;
+}
+
+/* Desktop: Top Right */
+.footprint-map-ctrls.is-desktop {
+    top: 20px;
+}
+
+/* Mobile: Bottom Right (above standard controls) */
+.footprint-map-ctrls.is-mobile {
+    bottom: 30px;
+}
+
+.footprint-ctrl-btn {
+    width: 32px;
+    height: 32px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    transition: background 0.2s, color 0.2s;
+    padding: 0;
+}
+
+.footprint-ctrl-btn:hover {
+    background: #f5f5f5;
+    color: #000;
+}
+
+.footprint-ctrl-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.dark .footprint-ctrl-btn {
+    background: #282828;
+    color: #ccc;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.dark .footprint-ctrl-btn:hover {
+    background: #333;
+    color: #fff;
+}
+
+/* ==========================================================================
+   Markers
+   ========================================================================== */
 .footprint-marker {
     display: block;
     width: 18px;
@@ -66,29 +179,12 @@
     border-color: rgba(0, 0, 0, 0.35);
 }
 
-.footprint-marker--sunset {
-    background: linear-gradient(135deg, #ffb347, #ff6f61);
-}
-
-.footprint-marker--ocean {
-    background: linear-gradient(135deg, #06beb6, #48b1bf);
-}
-
-.footprint-marker--violet {
-    background: linear-gradient(135deg, #a18cd1, #fbc2eb);
-}
-
-.footprint-marker--forest {
-    background: linear-gradient(135deg, #5ee7df, #39a37c);
-}
-
-.footprint-marker--amber {
-    background: linear-gradient(135deg, #f6d365, #fda085);
-}
-
-.footprint-marker--citrus {
-    background: linear-gradient(135deg, #fdfb8f, #a1ffce);
-}
+.footprint-marker--sunset { background: linear-gradient(135deg, #ffb347, #ff6f61); }
+.footprint-marker--ocean { background: linear-gradient(135deg, #06beb6, #48b1bf); }
+.footprint-marker--violet { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+.footprint-marker--forest { background: linear-gradient(135deg, #5ee7df, #39a37c); }
+.footprint-marker--amber { background: linear-gradient(135deg, #f6d365, #fda085); }
+.footprint-marker--citrus { background: linear-gradient(135deg, #fdfb8f, #a1ffce); }
 
 @media (max-width: 640px) {
     .footprint-marker {
@@ -97,7 +193,9 @@
     }
 }
 
-/* Category Filters */
+/* ==========================================================================
+   Filters
+   ========================================================================== */
 .footprint-map__filters {
     position: absolute;
     top: 6px;
@@ -154,7 +252,9 @@
     }
 }
 
-/* Info Popup */
+/* ==========================================================================
+   Popup (InfoWindow)
+   ========================================================================== */
 .footprint-popup {
     width: 260px;
     max-width: calc(100vw - 16px);
@@ -178,12 +278,12 @@
 .dark .footprint-popup {
     background: rgba(33,35,40,.85);
     color: rgba(255, 255, 255, 0.92);
-    border: none;
 }
 
 .footprint-popup h4 {
     margin: 0 0 .35rem;
     font-size: 1rem;
+    font-weight: 600;
 }
 
 .footprint-popup p {
@@ -211,84 +311,84 @@
 .footprint-popup__tag {
     font-size: .75rem;
     padding: 2px 6px;
-    border-radius: 4px;
-    background: rgba(6, 190, 182, 0.12);
-    color: #06beb6;
+    border-radius: 6px;
+    background: rgba(17, 24, 38, 0.08);
+    color: #111826;
 }
 
 .dark .footprint-popup__tag {
-    background: rgba(6, 190, 182, 0.2);
-    color: #5ee7df;
+    background: rgba(255, 255, 255, 0.14);
+    color: #f5f5f5;
 }
 
 .footprint-popup__links {
-    margin-top: .35rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 .35rem;
 }
 
 .footprint-popup__link {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 4px;
-    background: #111826;
-    color: #fff;
-    font-size: .85rem;
+    font-size: .82rem;
+    padding: 4px 12px;
+    border-radius: 18px;
+    background: rgba(17, 24, 38, 0.08);
+    color: inherit;
     text-decoration: none;
-    transition: background 0.2s ease;
+    transition: background .2s ease, color .2s ease;
 }
 
 .footprint-popup__link:hover {
-    background: #06beb6;
+    background: rgba(17, 24, 38, 0.16);
 }
 
 .dark .footprint-popup__link {
-    background: #f7f7f7;
-    color: #111;
+    background: rgba(255, 255, 255, 0.14);
 }
 
 .dark .footprint-popup__link:hover {
-    background: #5ee7df;
-    color: #111;
+    background: rgba(255, 255, 255, 0.2);
 }
 
-/* Photos */
+/* Popup Photos */
 .footprint-popup__photos {
     position: relative;
     margin-top: .5rem;
-    overflow: hidden;
 }
 
 .footprint-popup__track {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     overflow-x: auto;
-    scroll-behavior: smooth;
-    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 4px;
 }
 
 .footprint-popup__track::-webkit-scrollbar {
-    display: none;
+    height: 4px;
+}
+
+.footprint-popup__track::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 999px;
+}
+
+.dark .footprint-popup__track::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.28);
 }
 
 .footprint-popup__slide {
-    margin: 0;
-    flex-shrink: 0;
-    flex-basis: 120px;
+    margin: 0 !important;
+    flex: 0 0 120px;
+    scroll-snap-align: start;
 }
 
 .footprint-popup__slide img {
-    display: block;
     width: 120px;
     height: 90px;
+    border-radius: 8px;
     object-fit: cover;
-    border-radius: 4px;
     cursor: pointer;
-    transition: none;
-}
-
-/* 移除图片悬停放大与阴影效果（编辑器要求） */
-.footprint-popup__slide img:hover {
-    transform: none;
-    box-shadow: none;
 }
 
 .footprint-popup__photos-btn {
@@ -310,20 +410,17 @@
     z-index: 2;
 }
 
-.footprint-popup__photos-btn--prev {
-    left: 4px;
-}
-
-.footprint-popup__photos-btn--next {
-    right: 4px;
-}
+.footprint-popup__photos-btn--prev { left: 4px; }
+.footprint-popup__photos-btn--next { right: 4px; }
 
 .dark .footprint-popup__photos-btn {
     background: rgba(255, 255, 255, 0.8);
     color: #111;
 }
 
-/* Photo Viewer */
+/* ==========================================================================
+   Photo Viewer
+   ========================================================================== */
 .footprint-photo-viewer {
     position: fixed;
     inset: 0;
@@ -331,7 +428,7 @@
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 999;
+    z-index: 10001; /* High Z-Index */
     opacity: 0;
     pointer-events: none;
     transition: opacity .2s ease;
@@ -374,18 +471,59 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     line-height: 1;
-    box-sizing: border-box;
 }
 
-.footprint-photo-viewer-open {
-    overflow: hidden;
+/* Nav Buttons */
+.footprint-photo-viewer__prev,
+.footprint-photo-viewer__next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    cursor: pointer;
+    z-index: 10002;
+    transition: background .18s ease, transform .12s ease;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    backdrop-filter: blur(4px);
+}
+
+.footprint-photo-viewer__prev { left: 12px; }
+.footprint-photo-viewer__next { right: 12px; }
+
+.footprint-photo-viewer__prev:hover,
+.footprint-photo-viewer__next:hover {
+    background: rgba(0,0,0,0.6);
+    transform: translateY(-50%) scale(1.03);
+}
+
+:root:not(.dark) .footprint-photo-viewer__prev,
+:root:not(.dark) .footprint-photo-viewer__next {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+
+.dark .footprint-photo-viewer__prev,
+.dark .footprint-photo-viewer__next {
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
 }
 
 .footprint-photo-viewer__mask {
@@ -393,7 +531,11 @@
     inset: 0;
 }
 
-/* Mobile Responsive */
+.footprint-photo-viewer-open {
+    overflow: hidden;
+}
+
+/* Mobile Adjustments for Viewer/Popup */
 @media (max-width: 520px) {
     .amap-info-content,
     .amap-info-outer,
@@ -409,118 +551,20 @@
         line-height: 1.4;
         padding: 10px 12px;
     }
-
-    .footprint-popup h4 {
-        font-size: .94rem;
-        margin-bottom: .25rem;
-    }
-
-    .footprint-popup p {
-        font-size: .82rem;
-        margin-bottom: .25rem;
-    }
-
-    .footprint-popup__meta {
-        font-size: .7rem;
-    }
-
-    .footprint-popup__tag {
-        font-size: .7rem;
-        padding: 2px 5px;
-    }
-
-    .footprint-popup__link {
-        font-size: .75rem;
-        padding: 4px 10px;
-    }
-
-    .footprint-popup__photos {
-        margin-top: .35rem;
-    }
-
-    .footprint-popup__slide {
-        flex-basis: 100px;
-    }
-
-    .footprint-popup__slide img {
-        width: 100px;
-        height: 80px;
-    }
-
-    .footprint-popup__photos-btn {
-        width: 24px;
-        height: 24px;
-        font-size: .85rem;
-    }
+    .footprint-popup h4 { font-size: .94rem; margin-bottom: .25rem; }
+    .footprint-popup p { font-size: .82rem; margin-bottom: .25rem; }
+    .footprint-popup__meta { font-size: .7rem; }
+    .footprint-popup__tag { font-size: .7rem; padding: 2px 5px; }
+    .footprint-popup__link { font-size: .75rem; padding: 4px 10px; }
+    .footprint-popup__photos { margin-top: .35rem; }
+    .footprint-popup__slide { flex-basis: 100px; }
+    .footprint-popup__slide img { width: 100px; height: 80px; }
+    .footprint-popup__photos-btn { width: 24px; height: 24px; font-size: .85rem; }
 }
 
-/* Hide AMap Branding */
-.amap-logo,
-.amap-copyright {
-    display: none !important;
-}
-
-/* AMap Controls Dark Mode */
-.amap-scale-text,
-.amap-scalecontrol {
-    background: none !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-/* InfoWindow 暗色模式修复 */
-.dark .amap-info-content {
-    background-color: rgba(33, 35, 40, 0.85) !important;
-}
-
-.dark .amap-info-outer,
-.dark .amap-info-contentContainer {
-    background-color: transparent !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.dark .amap-info-sharp {
-    background-color: rgba(33, 35, 40, 0.85) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.dark .amap-control.amap-toolbar,
-.dark .amap-ui-control-zoom {
-    background-color: rgba(40, 40, 40, 0.9) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.dark .amap-ctrl-zoomin,
-.dark .amap-ctrl-zoomout,
-.dark .amap-ui-control-zoom a,
-.dark .amap-zoom-plus,
-.dark .amap-zoom-minus,
-.dark .amap-toolbar .amap-toolbar-text {
-    background-color: rgba(50, 50, 50, 0.95) !important;
-    color: #fff !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.dark .amap-ctrl-zoomin:hover,
-.dark .amap-ctrl-zoomout:hover,
-.dark .amap-ui-control-zoom a:hover,
-.dark .amap-zoom-plus:hover,
-.dark .amap-zoom-minus:hover,
-.dark .amap-toolbar .amap-toolbar-text:hover {
-    background-color: rgba(70, 70, 70, 0.95) !important;
-}
-
-.dark .amap-ctrl-zoomin,
-.dark .amap-ui-control-zoom .amap-ui-control-zoom-in,
-.dark .amap-zoom-plus {
-    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-.dark .amap-scale-text,
-.dark .amap-scalecontrol {
-    color: rgba(255, 255, 255, 0.85) !important;
-}
-
-.dark .amap-scale-line {
-    border-color: rgba(255, 255, 255, 0.6) !important;
+/* ==========================================================================
+   Cluster Toggle (Missing from _custom.scss but used in JS)
+   ========================================================================== */
+.footprint-map__cluster-toggle {
+    /* Styles are inline in JS, but we can override here if needed */
 }

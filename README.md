@@ -23,6 +23,7 @@
 - 🎨 **自定义标记** - 6种预设渐变色 + 自定义颜色支持
 - ⚡ **性能优化** - 精简代码（475行 JS），按需加载
  - ⚡ **性能优化** - 精简代码（475行 JS），按需加载
+- 🧭 **自定义控件** - 在地图右上角（或移动端右下）提供「重载视图 / 全屏 / 放大 / 缩小」四个控件，避免和地图原生控件重叠并支持暗黑主题。
 - 🔌 **即插即用** - 支持任何网站：WordPress、Hexo、Jekyll、Hugo 等
 
 ## 📸 演示
@@ -60,7 +61,7 @@
   <!-- 引入 JS（本地或 CDN，二选一） -->
   <script defer src="js/footprintmap.js"></script>
   <!-- <script defer src="https://cdn.jsdelivr.net/gh/Jiosanity/XiaoTen-FootprintMap@v1.3.0/static/js/footprintmap.js"></script> -->
-  <!-- 无需单独引入高德地图脚本，组件会按需加载 -->
+  <!-- 无需单独引入高德地图脚本，组件会按需加载（仅支持高德 AMap） -->
   <!-- 无需手写 new FootprintMap(...)，组件会自动初始化 -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
