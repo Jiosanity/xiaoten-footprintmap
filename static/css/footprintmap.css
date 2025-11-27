@@ -361,6 +361,17 @@
     cursor: zoom-in;
 }
 
+/* 强制图片为块级，避免 inline 图片在不同平台产生基线/空白差异 */
+.footprint-popup__slide img { display: block; }
+
+/* 兼容性回退：部分旧版 iOS/浏览器对 flex gap 存在差异，使用 margin-right 作为回退
+   并用 @supports 避免在支持 gap 的浏览器产生双重间距 */
+.footprint-popup__slide { margin-right: 8px; }
+.footprint-popup__slide:last-child { margin-right: 0; }
+@supports (gap: 8px) {
+    .footprint-popup__slide { margin-right: 0; }
+}
+
 .footprint-popup__photos-btn {
     position: absolute;
     top: 50%;
