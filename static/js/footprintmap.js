@@ -235,7 +235,10 @@
             this.map = new AMap.Map(div, {
                 zoom: 4, center: [locations[0].lng, locations[0].lat],
                 mapStyle: Utils.isDarkMode() ? CONFIG.MAP_STYLES.amap.dark : CONFIG.MAP_STYLES.amap.light,
-                viewMode: '2D', rotateEnable: false, pitchEnable: false
+                viewMode: '3D', // 强制使用 3D 引擎以支持自定义样式
+                pitch: 0,       // 视角设为 0，保持垂直俯视（2D视觉效果）
+                rotateEnable: false, 
+                pitchEnable: false
             });
 
             AMap.plugin(['AMap.Scale', 'AMap.MoveAnimation'], () => {
