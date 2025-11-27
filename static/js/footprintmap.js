@@ -3,6 +3,7 @@
  * Author: Xiaoten(www.xiaoten.com)
  * License: MIT
  * Date: 2025-11-27
+ * Update: Added iOS scroll fix, auto-hide arrows, and mobile panning fix.
  */
 
 (function () {
@@ -20,20 +21,22 @@
         },
         MARKER_PRESETS: ['sunset', 'ocean', 'violet', 'forest', 'amber', 'citrus'],
         MAP_STYLES: {
-            amap: { 
-                light: 'amap://styles/whitesmoke', 
-                dark: 'amap://styles/dark' 
+            amap: {
+                light: 'amap://styles/whitesmoke',
+                dark: 'amap://styles/dark'
             }
         },
         MARKER_SIZE: 18,
-        GRID_SIZE: 80
+        GRID_SIZE: 80,
+        // [新增] 垂直偏移量：让 Marker 出现在屏幕中心下方的距离（px），以便完整显示上方弹窗
+        OFFSET_DESKTOP: 100,
+        OFFSET_MOBILE: 140
     };
 
     // --- 工具类 ---
     const Utils = {
         escapeHtml: (str) => String(str).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]),
         isDarkMode: () => document.documentElement.classList.contains('dark'),
-        // 仅解析坐标，不进行转换
         parseCoords: (val) => {
             if (Array.isArray(val) && val.length >= 2) return { lng: parseFloat(val[0]), lat: parseFloat(val[1]) };
             if (typeof val === 'string') {
@@ -80,14 +83,14 @@
                 html += `<div class="footprint-popup__links"><a class="footprint-popup__link" href="${h(point.url)}" target="_blank" rel="noopener">${h(label)}</a></div>`;
             }
             if (point.photos.length) {
-                const needsNav = point.photos.length > 1;
-                const nav = needsNav ? 
+                // 仅当图片数量 > 1 时生成按钮 HTML，后续 JS 还会检查实际宽度是否溢出
+                const nav = point.photos.length > 1 ?
                     '<button type="button" class="footprint-popup__photos-btn footprint-popup__photos-btn--prev">&#10094;</button>' +
                     '<button type="button" class="footprint-popup__photos-btn footprint-popup__photos-btn--next">&#10095;</button>' : '';
-                const slides = point.photos.map((src, i) => 
+                const slides = point.photos.map((src, i) =>
                     `<figure class="footprint-popup__slide"><img src="${h(src)}" loading="lazy" alt="${h(point.name)}-${i+1}"></figure>`
                 ).join('');
-                html += `<div class="footprint-popup__photos"${needsNav ? ' data-carousel="true"' : ''}>${nav}<div class="footprint-popup__track">${slides}</div></div>`;
+                html += `<div class="footprint-popup__photos"${point.photos.length > 1 ? ' data-carousel="true"' : ''}>${nav}<div class="footprint-popup__track">${slides}</div></div>`;
             }
             html += `</div>`;
             return html;
@@ -116,7 +119,7 @@
             imgEl = el.querySelector('img');
             prevBtn = el.querySelector('.footprint-photo-viewer__prev');
             nextBtn = el.querySelector('.footprint-photo-viewer__next');
-            
+
             el.addEventListener('click', (e) => {
                 if (e.target === el || e.target.classList.contains('footprint-photo-viewer__mask') || e.target.classList.contains('footprint-photo-viewer__close')) close();
             });
@@ -161,15 +164,35 @@
 
     // 全局事件委托 (Photo / Carousel)
     document.addEventListener('click', (e) => {
+        // [修复 1] 轮播点击逻辑：使用基于索引的滚动，解决 iOS 空白溢出
         if (e.target.matches('.footprint-popup__photos-btn')) {
             e.stopPropagation();
             const track = e.target.parentElement.querySelector('.footprint-popup__track');
-            if (track) {
+            const slides = track ? Array.from(track.querySelectorAll('.footprint-popup__slide')) : [];
+
+            if (track && slides.length > 0) {
                 const dir = e.target.classList.contains('footprint-popup__photos-btn--next') ? 1 : -1;
-                track.scrollBy({ left: dir * track.clientWidth, behavior: 'smooth' });
+
+                // 计算单张幻灯片宽度（含gap）
+                // 优先通过两个 slide 的偏移差计算，因为这样包含 CSS 中的 gap
+                const slideWidth = slides.length > 1
+                    ? (slides[1].offsetLeft - slides[0].offsetLeft)
+                    : (slides[0].offsetWidth + 8); // fallback: width + 8px gap
+
+                const currentScroll = track.scrollLeft;
+                // 计算当前大概是第几张
+                const currentIndex = Math.round(currentScroll / slideWidth);
+
+                // 计算目标索引，并强制限制在合法范围内，防止滚到空白处
+                let targetIndex = currentIndex + dir;
+                targetIndex = Math.max(0, Math.min(targetIndex, slides.length - 1));
+
+                // 滚动到精确位置
+                track.scrollTo({ left: targetIndex * slideWidth, behavior: 'smooth' });
             }
             return;
         }
+
         if (e.target.matches('.footprint-popup__slide img')) {
             e.stopPropagation();
             const track = e.target.closest('.footprint-popup__track');
@@ -219,9 +242,16 @@
                 this.map.addControl(new AMap.Scale({ position: { bottom: '25px', left: '20px' } }));
             });
 
-            this.infoWindow = new AMap.InfoWindow({ anchor: 'bottom-center', offset: new AMap.Pixel(0, 0) });
+            // [修复 3] 禁用 autoMove，防止与手动 panTo 冲突
+            this.infoWindow = new AMap.InfoWindow({
+                anchor: 'bottom-center',
+                offset: new AMap.Pixel(0, 0),
+                autoMove: false,
+                closeWhenClickMap: false
+            });
+
             this.markerData = locations;
-            
+
             this.updateClusters();
             this.map.on('zoomend', () => this.updateClusters());
 
@@ -242,11 +272,11 @@
                 zoomOut: () => this.map.zoomOut(),
                 resize: () => this.map.resize(),
                 setClusterEnabled: (enabled) => { this.clusterEnabled = enabled; this.updateClusters(); },
-                updateData: (data) => { 
+                updateData: (data) => {
                     this.infoWindow.close(); // 筛选数据时关闭弹窗
-                    this.markerData = data; 
-                    this.updateClusters(); 
-                    this.fitView(); 
+                    this.markerData = data;
+                    this.updateClusters();
+                    this.fitView();
                 }
             };
         }
@@ -286,17 +316,34 @@
                 offset: new AMap.Pixel(-9, -9),
                 map: this.map
             });
-            
+
             marker.on('click', () => {
                 this.ignoreMapClick = true;
                 setTimeout(() => { this.ignoreMapClick = false; }, 200);
 
                 this.infoWindow.setContent(PopupBuilder.build(pt));
                 this.infoWindow.open(this.map, [pt.lng, pt.lat]);
-                
-                // 垂直偏移：让弹窗垂直居中显示
+
+                // [修复 2] 检查内容是否溢出，如果不需要滚动则隐藏箭头
+                setTimeout(() => {
+                    const popupEl = this.container.querySelector('.footprint-popup');
+                    if (popupEl) {
+                        const track = popupEl.querySelector('.footprint-popup__track');
+                        const btns = popupEl.querySelectorAll('.footprint-popup__photos-btn');
+                        // 逻辑：如果 scrollWidth (内容宽) <= clientWidth (可视宽)，说明没溢出，隐藏按钮
+                        // 加 2px 缓冲防止计算误差
+                        if (track && btns.length > 0 && track.scrollWidth <= track.clientWidth + 2) {
+                            btns.forEach(btn => btn.style.display = 'none');
+                        }
+                    }
+                }, 50); // 延时等待 DOM 渲染
+
+                // [修复 3] 强制手动平移 (解决移动端切换 Marker 不动的问题)
+                const isMobile = window.innerWidth < 640;
+                const offsetY = isMobile ? CONFIG.OFFSET_MOBILE : CONFIG.OFFSET_DESKTOP;
                 const pixel = this.map.lngLatToContainer([pt.lng, pt.lat]);
-                const targetPixel = new AMap.Pixel(pixel.x, pixel.y - 100);
+                // 目标中心点在 Marker 所在像素位置的上方 Y 轴 offsetY 处
+                const targetPixel = new AMap.Pixel(pixel.x, pixel.y - offsetY);
                 const newCenter = this.map.containerToLngLat(targetPixel);
                 this.map.panTo(newCenter);
             });
@@ -307,8 +354,8 @@
             const count = points.length;
             const centerLng = points.reduce((s, p) => s + p.lng, 0) / count;
             const centerLat = points.reduce((s, p) => s + p.lat, 0) / count;
-            
-            const [size, gradient, fontSize] = count < 5 
+
+            const [size, gradient, fontSize] = count < 5
                 ? [38, 'linear-gradient(135deg, rgba(6,190,182,0.75), rgba(72,177,191,0.75))', '13px']
                 : count < 10
                 ? [42, 'linear-gradient(135deg, rgba(94,231,223,0.75), rgba(6,190,182,0.75))', '14px']
@@ -322,7 +369,7 @@
                 offset: new AMap.Pixel(-size/2, -size/2),
                 map: this.map
             });
-            
+
             marker.on('click', () => {
                 this.ignoreMapClick = true;
                 setTimeout(() => { this.ignoreMapClick = false; }, 200);
@@ -343,7 +390,7 @@
     // --- 主加载流程 ---
     async function initMap(container) {
         const { json: dataUrl, amapKey: apiKey } = container.dataset;
-        
+
         if (!apiKey) {
             container.innerHTML = `<div class="footprint-map__error">配置错误：缺少 API Key (data-amap-key)</div>`;
             return;
@@ -394,7 +441,7 @@
         const ctrlWrap = document.createElement('div');
         const isMobile = window.matchMedia('(max-width: 640px)').matches;
         ctrlWrap.className = `footprint-map-ctrls ${isMobile ? 'is-mobile' : 'is-desktop'}`;
-        
+
         const icons = {
             full: '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
             exit: '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
@@ -432,15 +479,15 @@
         // 3. 集群开关
         const togWrap = document.createElement('div');
         togWrap.className = 'footprint-map__cluster-toggle';
-        
+
         const label = document.createElement('span');
         label.className = 'toggle-label';
         label.textContent = '集群显示';
-        
+
         const btn = document.createElement('button');
         btn.className = 'toggle-switch';
         btn.innerHTML = '<span class="toggle-knob"></span>';
-        
+
         let enabled = true;
         btn.onclick = () => {
             enabled = !enabled;
